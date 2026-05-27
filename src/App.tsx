@@ -13,6 +13,8 @@ import MasterTipe from '@/pages/admin/master/MasterTipe'
 import MasterLokasi from '@/pages/admin/master/MasterLokasi'
 import MasterJobPage from '@/pages/admin/master/MasterJob'
 import AdminReport from '@/pages/admin/report/AdminReport'
+import ProgramKerjaPage from '@/pages/admin/program-kerja/ProgramKerja'
+import OutPlanPage from '@/pages/admin/program-kerja/OutPlan'
 
 // Staff
 import StaffLayout from '@/layouts/StaffLayout'
@@ -100,6 +102,16 @@ export default function App() {
           <Route
             path="master/job"
             element={<MasterJobPage />}
+          />
+
+          <Route
+            path="program-kerja"
+            element={<ProgramKerjaPage />}
+          />
+
+          <Route
+            path="program-kerja/out-plan"
+            element={<OutPlanPage />}
           />
 
           <Route

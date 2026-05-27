@@ -191,7 +191,7 @@ export function DataTable<T extends { id: number }>({
               <tr className="border-b border-gray-100 bg-[#fafafa]">
 
                 <th
-                  className="text-left px-5 py-4 text-xs font-medium
+                  className="text-center px-5 py-4 text-xs font-medium
                              text-gray-500 uppercase tracking-wide w-14"
                 >
                   No
@@ -201,7 +201,7 @@ export function DataTable<T extends { id: number }>({
                   <th
                     key={col.key}
                     className={cn(
-                      'text-left px-5 py-4 text-xs font-medium',
+                      'text-center px-5 py-4 text-xs font-medium',
                       'text-gray-500 uppercase tracking-wide',
                       col.width
                     )}
@@ -256,14 +256,14 @@ export function DataTable<T extends { id: number }>({
                     className="hover:bg-[#fafafa] transition-colors"
                   >
 
-                    <td className="px-5 py-4 text-gray-400 text-xs">
+                    <td className="px-5 py-4 text-gray-400 text-xs text-center">
                       {(page - 1) * pageSize + idx + 1}
                     </td>
 
                     {columns.map((col) => (
                       <td
                         key={col.key}
-                        className="px-5 py-4 text-gray-700"
+                        className="px-5 py-4 text-gray-700 text-center"
                       >
                         {col.render
                           ? col.render(row)

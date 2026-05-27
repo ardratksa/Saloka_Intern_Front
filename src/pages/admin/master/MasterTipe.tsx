@@ -90,8 +90,8 @@ export default function MasterTipe() {
         data={types}
         columns={columns}
         isLoading={isLoading}
-        title="Tipe"
-        subtitle="Kelola tipe lokasi (Toilet, Laktasi, dll)"
+        title="Tipe Area"
+        subtitle="Kelola tipe area (Toilet, Laktasi, dll)"
         searchPlaceholder="Cari tipe..."
         headerRight={
           <Button
@@ -135,7 +135,7 @@ export default function MasterTipe() {
         <div>
           <Label>Nama Tipe</Label>
           <Input
-            placeholder="Masukan nama tipe lokasi"
+            placeholder="Masukan nama tipe area"
             value={form.name}
             onChange={(e) =>
                 setForm({
@@ -158,7 +158,7 @@ export default function MasterTipe() {
               </p>
 
               <p className="text-xs text-gray-500 mt-0.5">
-                Aktifkan atau nonaktifkan tipe lokasi
+                Aktifkan atau nonaktifkan tipe area
               </p>
             </div>
 

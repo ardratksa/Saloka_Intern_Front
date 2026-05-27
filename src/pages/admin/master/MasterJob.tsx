@@ -4,7 +4,6 @@ import { getLocationTypes } from '@/api/location'
 import api from '@/lib/axios'
 import { DataTable } from '@/components/admin/DataTable'
 import { FormModal } from '@/components/admin/FormModal'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import {
@@ -14,6 +13,7 @@ import {
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { MasterJob, LocationType } from '@/types'
+import { Textarea } from '@/components/ui/textarea'
 
 interface JobRow extends MasterJob { id: number }
 
@@ -94,16 +94,41 @@ export default function MasterJobPage() {
   })
 
   const columns = [
-    { key: 'job', label: 'Nama Pekerjaan' },
+     {
+      key: 'job',
+      label: 'Nama Pekerjaan',
+      render: (j: JobRow) => (
+        <div className="text-left">
+          {j.job}
+        </div>
+      ),
+    },
     {
       key: 'location_type',
       label: 'Tipe',
-      render: (j: JobRow) => (
-        <span className="text-xs px-2 py-0.5 rounded-full font-medium
-                         bg-brand-50 text-brand-700">
-          {j.location_type}
-        </span>
-      ),
+      render: (j: JobRow) => {
+        const badgeColors = [
+          'bg-pink-100 text-pink-700',
+          'bg-blue-100 text-blue-700',
+          'bg-green-100 text-green-700',
+          'bg-orange-100 text-orange-700',
+          'bg-purple-100 text-purple-700',
+          'bg-cyan-100 text-cyan-700',
+          'bg-yellow-100 text-yellow-700',
+          'bg-red-100 text-red-700',
+          'bg-indigo-100 text-indigo-700',
+        ]
+
+        return (
+          <span
+            className={`text-xs px-3 py-1 rounded-full font-medium inline-flex items-center justify-center ${
+              badgeColors[(j.location_type_id - 1) % badgeColors.length]
+            }`}
+          >
+            {j.location_type}
+          </span>
+        )
+      },
     },
     {
       key: 'is_active',
@@ -230,12 +255,17 @@ export default function MasterJobPage() {
         )}
         <div>
           <Label>Nama Pekerjaan</Label>
-          <Input
+          <Textarea
             placeholder="Masukan nama pekerjaan checklist"
             value={form.job}
+            maxLength={120}
             onChange={(e) => setForm({ ...form, job: e.target.value })}
-            className="mt-1"
+            className="mt-1 min-h-24 resize-none"
           />
+
+          <p className="text-xs text-gray-400 mt-1 text-right">
+            {form.job.length}/120 karakter
+          </p>
         </div>
         <div className="pt-2">
           <Label>Status</Label>
