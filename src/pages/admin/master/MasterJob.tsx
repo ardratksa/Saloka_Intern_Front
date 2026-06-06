@@ -14,6 +14,7 @@ import { Plus, Pencil, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { MasterJob, LocationType } from '@/types'
 import { Textarea } from '@/components/ui/textarea'
+import Swal from 'sweetalert2'
 
 interface JobRow extends MasterJob { id: number }
 
@@ -194,8 +195,42 @@ export default function MasterJobPage() {
               <Pencil className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={() => {
-                if (confirm('Hapus job ini?')) deleteMut.mutate(j.id)
+              onClick={async () => {
+
+                const result =
+
+                  await Swal.fire({
+
+                    title:
+                      'Hapus Pekerjaan?',
+
+                    text:
+                      'Data yang dihapus tidak dapat dikembalikan',
+
+                    icon:
+                      'warning',
+
+                    showCancelButton:
+                      true,
+
+                    confirmButtonText:
+                      'Ya, Hapus',
+
+                    cancelButtonText:
+                      'Batal',
+
+                    confirmButtonColor:
+                      '#dc2626',
+                  })
+
+                if (
+                  result.isConfirmed
+                ) {
+
+                  deleteMut.mutate(
+                    j.id
+                  )
+                }
               }}
               className="p-1.5 rounded-lg hover:bg-red-50 text-red-400"
             >

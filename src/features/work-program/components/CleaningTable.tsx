@@ -1,5 +1,7 @@
 import {
-  Check,
+  Eye,
+  Pencil,
+  Trash2,
 } from 'lucide-react'
 
 import type {
@@ -8,41 +10,38 @@ import type {
 
 interface Props {
 
-  days: number[]
-
   data: WorkProgram[]
 
   isLoading: boolean
 
   viewType: string
 
-  weekIndex: number
+  onPreview: (
+    item: WorkProgram
+  ) => void
 
-  year: number
+  onEdit: (
+    item: WorkProgram
+  ) => void
 
-  month: number
-
-  setWeekIndex: React.Dispatch<
-    React.SetStateAction<number>
-  >
-
-  handleClickCell: (
-    item: WorkProgram,
-    day: number
+  onDelete: (
+    id: number
   ) => void
 }
 
 export default function CleaningTable({
 
-  days,
   data,
+
   isLoading,
+
   viewType,
-  weekIndex,
-  year,
-  month,
-  setWeekIndex,
-  handleClickCell,
+
+  onPreview,
+
+  onEdit,
+
+  onDelete,
 
 }: Props) {
 
@@ -78,115 +77,38 @@ export default function CleaningTable({
     >
 
       {/* HEADER */}
+
       <div
         className="
-          flex items-center
-          justify-between
           border-b border-gray-200
           px-7 py-5
         "
       >
 
-        <div
+        <h3
           className="
             text-lg
             font-semibold
-            text-gray-800
+            text-gray-900
           "
         >
+          Daftar Program Kerja
+        </h3>
 
-          {
-            viewType === 'fogging'
-
-              ? 'Fogging View'
-
-              : viewType === 'monthly'
-
-                ? 'Monthly View'
-
-                : `Minggu ${weekIndex + 1}`
-          }
-
-        </div>
-
-        {viewType === 'weekly' && (
-
-          <div className="flex gap-3">
-
-            <button
-
-              onClick={() =>
-
-                setWeekIndex(
-                  (prev) =>
-                    Math.max(
-                      prev - 1,
-                      0
-                    )
-                )
-
-              }
-
-              className="
-                rounded-xl
-                border border-gray-200
-                bg-white
-                px-4 py-2
-                text-sm
-                font-medium
-                text-gray-700
-                transition-all
-                hover:bg-gray-50
-              "
-            >
-              Prev
-            </button>
-
-            <button
-
-              onClick={() =>
-
-                setWeekIndex((prev) => {
-
-                  const totalWeeks =
-                    Math.ceil(
-                      new Date(
-                        year,
-                        month,
-                        0
-                      ).getDate() / 7
-                    )
-
-                  return Math.min(
-                    prev + 1,
-                    totalWeeks - 1
-                  )
-                })
-
-              }
-
-              className="
-                rounded-xl
-                border border-gray-200
-                bg-white
-                px-4 py-2
-                text-sm
-                font-medium
-                text-gray-700
-                transition-all
-                hover:bg-gray-50
-              "
-            >
-              Next
-            </button>
-
-          </div>
-
-        )}
+        <p
+          className="
+            mt-1
+            text-sm
+            text-gray-500
+          "
+        >
+          Jadwal pekerjaan yang telah dibuat
+        </p>
 
       </div>
 
       {/* TABLE */}
+
       <div className="overflow-auto">
 
         <table className="min-w-full">
@@ -195,33 +117,25 @@ export default function CleaningTable({
 
             <tr className="bg-emerald-700 text-white">
 
-              <th
-                className="
-                  min-w-70
-                  px-7 py-5
-                  text-left
-                  text-sm
-                  font-semibold
-                "
-              >
+              <th className="px-7 py-4 text-left">
                 Pekerjaan
               </th>
 
-              {days.map((day) => (
+              <th className="px-7 py-4 text-left">
+                Area
+              </th>
 
-                <th
-                  key={day}
-                  className="
-                    min-w-15
-                    px-4 py-5
-                    text-sm
-                    font-semibold
-                  "
-                >
-                  {day}
-                </th>
+              <th className="px-7 py-4 text-center">
+                Jenis
+              </th>
 
-              ))}
+              <th className="px-7 py-4 text-center">
+                Jadwal
+              </th>
+
+              <th className="px-7 py-4 text-center">
+                Aksi
+              </th>
 
             </tr>
 
@@ -234,10 +148,7 @@ export default function CleaningTable({
               <tr>
 
                 <td
-                  colSpan={
-                    days.length + 1
-                  }
-
+                  colSpan={5}
                   className="
                     py-24
                     text-center
@@ -257,10 +168,7 @@ export default function CleaningTable({
               <tr>
 
                 <td
-                  colSpan={
-                    days.length + 1
-                  }
-
+                  colSpan={5}
                   className="
                     py-24
                     text-center
@@ -276,16 +184,17 @@ export default function CleaningTable({
 
             {!isLoading &&
               filteredData.map(
-                (item: WorkProgram) => (
+                (item) => (
 
                 <tr
                   key={item.id}
                   className="
                     border-t border-gray-100
-                    transition-colors
                     hover:bg-gray-50
                   "
                 >
+
+                  {/* PEKERJAAN */}
 
                   <td
                     className="
@@ -293,23 +202,42 @@ export default function CleaningTable({
                     "
                   >
 
-                    <div className="space-y-1">
+                    <p
+                      className="
+                        font-semibold
+                        text-gray-900
+                      "
+                    >
+                      {item.job?.job}
+                    </p>
+
+                  </td>
+
+                  {/* AREA */}
+
+                  <td
+                    className="
+                      px-7 py-5
+                    "
+                  >
+
+                    <div>
 
                       <p
                         className="
                           text-sm
-                          font-semibold
-                          text-gray-900
+                          text-gray-700
                         "
                       >
-                        {item.job?.job || 'Pekerjaan'}
-                      </p>
-
-                      <p className="text-xs text-gray-500">
                         {item.location_name}
                       </p>
 
-                      <p className="text-xs text-gray-400">
+                      <p
+                        className="
+                          text-xs
+                          text-gray-500
+                        "
+                      >
                         {item.sub_location}
                       </p>
 
@@ -317,97 +245,144 @@ export default function CleaningTable({
 
                   </td>
 
-                  {days.map((day) => {
+                  {/* JENIS */}
 
-                    const active =
-                      item.scheduled_dates?.includes(
-                        day
-                      ) || false
+                  <td
+                    className="
+                      px-7 py-5
+                      text-center
+                    "
+                  >
 
-                    return (
+                    <span
+                      className={`
+                        rounded-full
+                        px-4 py-1
+                        text-sm
+                        font-medium
 
-                      <td
-                        key={day}
+                        ${
+                          item.plan === 'weekly'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-orange-100 text-orange-700'
+                        }
+                      `}
+                    >
+                      {item.plan}
+                    </span>
+
+                  </td>
+
+                  {/* JUMLAH TANGGAL */}
+
+                  <td
+                    className="
+                      px-7 py-5
+                      text-center
+                    "
+                  >
+
+                    <span
+                      className="
+                        rounded-full
+                        bg-gray-100
+                        px-3 py-1
+                        text-xs
+                        font-medium
+                        text-gray-700
+                      "
+                    >
+
+                      {
+                        item
+                          .scheduled_dates
+                          ?.length || 0
+                      } Hari
+
+                    </span>
+
+                  </td>
+
+                  {/* AKSI */}
+
+                  <td
+                    className="
+                      px-7 py-5
+                    "
+                  >
+
+                    <div
+                      className="
+                        flex
+                        items-center
+                        justify-center
+                        gap-2
+                      "
+                    >
+
+                      <button
+                        onClick={() =>
+                          onPreview(
+                            item
+                          )
+                        }
                         className="
-                          py-4 text-center
+                          rounded-xl
+                          p-2
+                          text-sky-600
+                          hover:bg-sky-50
                         "
                       >
-
-                        <button
-
-                          onClick={(e) => {
-
-                            e.stopPropagation()
-
-                            handleClickCell(
-                              item,
-                              day
-                            )
-                          }}
-
+                        <Eye
                           className="
-                            mx-auto
-                            flex h-10 w-10
-                            items-center
-                            justify-center
-                            rounded-xl
-                            transition-all
-                            hover:scale-105
+                            h-4 w-4
                           "
-                        >
+                        />
+                      </button>
 
-                          {active ? (
+                      <button
+                        onClick={() =>
+                          onEdit(
+                            item
+                          )
+                        }
+                        className="
+                          rounded-xl
+                          p-2
+                          text-amber-600
+                          hover:bg-amber-50
+                        "
+                      >
+                        <Pencil
+                          className="
+                            h-4 w-4
+                          "
+                        />
+                      </button>
 
-                            <div
-                              className="
-                                flex h-10 w-10
-                                items-center
-                                justify-center
-                                rounded-xl
-                                bg-emerald-100
-                              "
-                            >
+                      <button
+                        onClick={() =>
+                          onDelete(
+                            item.id
+                          )
+                        }
+                        className="
+                          rounded-xl
+                          p-2
+                          text-red-600
+                          hover:bg-red-50
+                        "
+                      >
+                        <Trash2
+                          className="
+                            h-4 w-4
+                          "
+                        />
+                      </button>
 
-                              <Check
-                                className="
-                                  h-5 w-5
-                                  text-emerald-600
-                                "
-                              />
+                    </div>
 
-                            </div>
-
-                          ) : (
-
-                            <div
-                              className="
-                                flex h-10 w-10
-                                items-center
-                                justify-center
-                                rounded-xl
-                                bg-gray-100
-                              "
-                            >
-
-                              <div
-                                className="
-                                  h-4 w-4
-                                  rounded
-                                  border border-gray-300
-                                "
-                              />
-
-                            </div>
-
-                          )}
-
-                        </button>
-
-                      </td>
-
-                    )
-
-                  })}
+                  </td>
 
                 </tr>
 

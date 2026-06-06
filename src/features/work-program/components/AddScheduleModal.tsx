@@ -1,5 +1,8 @@
 import Select from 'react-select'
 
+import { DayPicker } from 'react-day-picker'
+import 'react-day-picker/dist/style.css'
+
 import {
   BriefcaseBusiness,
   Building2,
@@ -40,6 +43,14 @@ interface Props {
   masterJobs: any[]
 
   handleSave: () => void
+
+  editingItem?: any
+
+  selectedDates: Date[]
+
+  setSelectedDates: (
+    dates: Date[]
+  ) => void
 }
 
 const selectStyles = {
@@ -133,6 +144,12 @@ export default function AddScheduleModal({
 
   handleSave,
 
+  editingItem,
+
+  selectedDates,
+
+  setSelectedDates,
+
 }: Props) {
 
   if (!openModal) {
@@ -209,25 +226,27 @@ export default function AddScheduleModal({
       className="
         fixed inset-0
         z-50
-        flex items-center
-        justify-center
+        flex items-center justify-center
         bg-black/40
         backdrop-blur-sm
         p-4
       "
     >
 
-      <div
-        className="
-          relative
-          w-full
-          max-w-2xl
-          overflow-hidden
-          rounded-[28px]
-          bg-white
-          shadow-2xl
-        "
-      >
+        <div
+          className="
+            relative
+            w-full
+            max-w-xl
+            max-h-[90vh]
+            overflow-hidden
+            rounded-[28px]
+            bg-white
+            shadow-2xl
+            flex
+            flex-col
+          "
+        >
 
         {/* HEADER */}
         <div
@@ -248,7 +267,11 @@ export default function AddScheduleModal({
                 text-gray-900
               "
             >
-              Tambah Jadwal
+              {
+                editingItem
+                  ? 'Edit Jadwal'
+                  : 'Tambah Jadwal'
+              }
             </h2>
 
             <p
@@ -258,7 +281,11 @@ export default function AddScheduleModal({
                 text-gray-500
               "
             >
-              Tambahkan jadwal pekerjaan cleaning
+              {
+                editingItem
+                  ? 'Perbarui jadwal pekerjaan'
+                  : 'Tambahkan jadwal pekerjaan cleaning'
+              }
             </p>
 
           </div>
@@ -293,6 +320,9 @@ export default function AddScheduleModal({
         {/* BODY */}
         <div
           className="
+            flex-1
+            overflow-y-auto
+            scrollbar-thin
             space-y-5
             px-8 py-7
           "
@@ -551,6 +581,61 @@ export default function AddScheduleModal({
 
           </div>
 
+          {/* TANGGAL PEKERJAAN */}
+
+          <div className="space-y-3">
+
+            <label
+              className="
+                text-sm
+                font-medium
+                text-gray-700
+              "
+            >
+              Tanggal Pekerjaan
+            </label>
+
+            <div
+              className="
+                rounded-2xl
+                border border-gray-200
+                p-4
+                bg-gray-50
+              "
+            >
+              <div
+                className="
+                  flex
+                  justify-center
+                "
+              >
+
+              <DayPicker
+
+                mode="multiple"
+
+                selected={
+                  selectedDates
+                }
+
+                onSelect={(dates) =>
+
+                  setSelectedDates(
+                    dates || []
+                  )
+
+                }
+
+              />
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+
         </div>
 
         {/* FOOTER */}
@@ -601,7 +686,11 @@ export default function AddScheduleModal({
               hover:bg-emerald-600
             "
           >
-            Simpan Jadwal
+            {
+              editingItem
+                ? 'Update Jadwal'
+                : 'Simpan Jadwal'
+            }
           </button>
 
         </div>

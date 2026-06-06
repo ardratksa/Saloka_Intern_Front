@@ -1,7 +1,7 @@
 export type ViewType =
+  | 'all'
   | 'weekly'
   | 'monthly'
-  | 'fogging'
 
 export interface WorkProgram {
   id: number

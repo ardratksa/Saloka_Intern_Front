@@ -1,23 +1,28 @@
 import Select from 'react-select'
 
 import {
-  CalendarDays,
   CalendarRange,
   Layers3,
 } from 'lucide-react'
+
+import DatePicker from 'react-datepicker'
+import 'react-datepicker/dist/react-datepicker.css'
 
 type Props = {
 
   viewType: string
   setViewType: any
 
-  month: number
-  setMonth: any
+  startDate: Date | null
+  setStartDate: any
 
-  year: number
-  setYear: any
+  endDate: Date | null
+  setEndDate: any
 
-  months: string[]
+  selectedJob: string
+  setSelectedJob: any
+
+  masterJobs: any[]
 
   hideFogging?: boolean
 }
@@ -98,19 +103,25 @@ export default function WorkProgramFilters({
   viewType,
   setViewType,
 
-  month,
-  setMonth,
+  startDate,
+  setStartDate,
 
-  year,
-  setYear,
+  endDate,
+  setEndDate,
 
-  months,
+  selectedJob,
+  setSelectedJob,
 
-  hideFogging,
+  masterJobs,
 
 }: Props) {
 
   const viewOptions = [
+
+    {
+      value: 'all',
+      label: 'Semua',
+    },
 
     {
       value: 'weekly',
@@ -123,45 +134,22 @@ export default function WorkProgramFilters({
     },
   ]
 
-  if (!hideFogging) {
 
-    viewOptions.push({
+  const jobOptions = [
 
-      value: 'fogging',
-      label: 'Fogging',
-    })
-  }
+    {
+      value: '',
+      label: 'Semua Pekerjaan',
+    },
 
-  const monthOptions =
+    ...masterJobs.map(
+      (job: any) => ({
 
-    months.map(
-      (
-        monthName,
-        index
-      ) => ({
+        value: job.job,
 
-        value: index + 1,
-
-        label: monthName,
+        label: job.job,
       })
-    )
-
-  const yearOptions = [
-
-    {
-      value: 2025,
-      label: '2025',
-    },
-
-    {
-      value: 2026,
-      label: '2026',
-    },
-
-    {
-      value: 2027,
-      label: '2027',
-    },
+    ),
   ]
 
   return (
@@ -219,87 +207,108 @@ export default function WorkProgramFilters({
 
       </div>
 
-      {/* MONTH */}
-      <div className="relative">
+     
 
-        <CalendarDays
-          className="
-            pointer-events-none
-            absolute
-            left-4 top-1/2
-            z-10
-            h-5 w-5
-            -translate-y-1/2
-            text-gray-400
-          "
-        />
+      {/* DATE RANGE */}
 
-        <Select
+        <div className="relative">
 
-          styles={selectStyles}
+          <CalendarRange
+            className="
+              pointer-events-none
+              absolute
+              left-4 top-1/2
+              z-10
+              h-5 w-5
+              -translate-y-1/2
+              text-gray-400
+            "
+          />
 
-          isSearchable={false}
+          <DatePicker
 
-          options={monthOptions}
+            selectsRange
 
-          value={
-            monthOptions.find(
-              (item) =>
-                item.value ===
-                month
-            )
-          }
+            startDate={startDate}
 
-          onChange={(val: any) =>
-            setMonth(
-              val?.value
-            )
-          }
+            endDate={endDate}
 
-        />
+            onChange={(dates) => {
 
-      </div>
+              const [
+                start,
+                end,
+              ] = dates
 
-      {/* YEAR */}
-      <div className="relative">
+              setStartDate(start)
+              setEndDate(end)
 
-        <CalendarRange
-          className="
-            pointer-events-none
-            absolute
-            left-4 top-1/2
-            z-10
-            h-5 w-5
-            -translate-y-1/2
-            text-gray-400
-          "
-        />
+            }}
 
-        <Select
+            isClearable
 
-          styles={selectStyles}
+            placeholderText="Pilih Rentang Tanggal"
 
-          isSearchable={false}
+            dateFormat="dd MMM yyyy"
 
-          options={yearOptions}
+            className="
+              h-14
+              w-[320px]
+              rounded-2xl
+              border
+              border-gray-200
+              bg-white
+              pl-12
+              pr-4
+              text-sm
+              font-medium
+              outline-none
+            "
 
-          value={
-            yearOptions.find(
-              (item) =>
-                item.value ===
-                year
-            )
-          }
+          />
 
-          onChange={(val: any) =>
-            setYear(
-              val?.value
-            )
-          }
+        </div>
 
-        />
+      {/* JOB */}
+        <div className="relative">
 
-      </div>
+          <Layers3
+            className="
+              pointer-events-none
+              absolute
+              left-4 top-1/2
+              z-10
+              h-5 w-5
+              -translate-y-1/2
+              text-gray-400
+            "
+          />
+
+          <Select
+
+            styles={selectStyles}
+
+            options={jobOptions}
+
+            value={
+              jobOptions.find(
+                (item) =>
+                  item.value ===
+                  selectedJob
+              )
+            }
+
+            onChange={(val: any) =>
+              setSelectedJob(
+                val?.value || ''
+              )
+            }
+
+            placeholder="Semua Pekerjaan"
+
+          />
+
+        </div>
 
     </div>
   )

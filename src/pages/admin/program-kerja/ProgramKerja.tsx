@@ -1,10 +1,19 @@
 import { useState } from 'react'
+
 import CleaningTable from
 '@/features/work-program/components/CleaningTable'
+
 import WorkProgramFilters from
 '@/features/work-program/components/WorkProgramFilters'
+
 import AddScheduleModal from
 '@/features/work-program/components/AddScheduleModal'
+
+import PreviewScheduleModal from
+'@/features/work-program/components/PreviewScheduleModal'
+
+import TypeScheduleModal from
+'@/features/work-program/components/TypeScheduleModal'
 
 import {
   useScheduleActions,
@@ -28,16 +37,9 @@ import {
 
 import {
   useWorkProgram,
-} from '@/features/work-program/hooks/useWorkProgram'
-
-import {
-  getDays,
-} from '@/features/work-program/utils/workProgramHelpers'
-
-import {
-  months,
 } from
-'@/features/work-program/utils/constants'
+'@/features/work-program/hooks/useWorkProgram'
+
 
 import {
   CalendarDays,
@@ -46,16 +48,19 @@ import {
 
 export default function ProgramKerjaPage() {
 
-  const {
+ const {
 
     viewType,
     setViewType,
 
-    month,
-    setMonth,
+    startDate,
+    setStartDate,
 
-    year,
-    setYear,
+    endDate,
+    setEndDate,
+
+    selectedJob,
+    setSelectedJob,
 
   } = useWorkProgramFilter()
 
@@ -64,8 +69,11 @@ export default function ProgramKerjaPage() {
     openModal,
     setOpenModal,
 
-    selectedDay,
-    setSelectedDay,
+    editingItem,
+    setEditingItem,
+
+    selectedDates,
+    setSelectedDates,
 
     selectedJobId,
     setSelectedJobId,
@@ -79,70 +87,158 @@ export default function ProgramKerjaPage() {
     subLocation,
     setSubLocation,
 
+    selectedType,
+    setSelectedType,
+
   } = useScheduleModal()
 
-  const [weekIndex, setWeekIndex] =
-  useState(0)
+  const [
 
-  const days = getDays(
-    viewType,
-    weekIndex,
-    month,
-    year
-  )
+    openTypeModal,
+    setOpenTypeModal,
+
+  ] = useState(false)
+
+  const [
+
+    openPreview,
+    setOpenPreview,
+
+  ] = useState(false)
+
+  const [
+
+    previewData,
+    setPreviewData,
+
+  ] = useState<any>(null)
+
+  const currentDate =
+  new Date()
 
   const {
 
-  workProgramsQuery,
+    workProgramsQuery,
 
-  masterJobsQuery,
+    allWorkProgramsQuery,
 
-  locationsQuery,
+    masterJobsQuery,
 
-  createMutation,
+    locationsQuery,
 
-  updateMutation,
+    createMutation,
 
-  deleteMutation,
+    updateMutation,
 
-} = useWorkProgram(
-  viewType,
-  month,
-  year,
-  'plan'
-)
+    deleteMutation,
 
-const data =
+  } = useWorkProgram(
+
+    viewType,
+
+    currentDate.getMonth() + 1,
+
+    currentDate.getFullYear(),
+
+    'plan'
+  )
+
+  const rawData =
   workProgramsQuery.data?.data || []
 
-const isLoading =
-  workProgramsQuery.isLoading
+  const allWorkPrograms =
 
-const locations =
-  locationsQuery.data || []
+  allWorkProgramsQuery.data?.data || []
 
-const masterJobs =
-  useFilteredJobs(
-    masterJobsQuery.data || [],
-    viewType
-  )
+  const data =
+    viewType === 'all'
+      ? rawData
+      : rawData.filter(
+          (item: any) =>
+            item.plan === viewType
+        )
+  
+  let filteredData =
+
+    selectedJob
+
+      ? data.filter(
+          (item: any) =>
+
+            item.job?.job ===
+            selectedJob
+        )
+
+      : data
+
+  if (
+    startDate &&
+    endDate
+  ) {
+
+    filteredData =
+      filteredData.filter(
+        (item: any) => {
+
+          const dates =
+
+            item.scheduled_dates.map(
+              (day: number) =>
+
+                new Date(
+                  item.year,
+                  item.month - 1,
+                  day
+                )
+            )
+
+          return dates.some(
+            (date: Date) =>
+
+              date >= startDate &&
+              date <= endDate
+          )
+        }
+      )
+  }
+
+  const isLoading =
+    workProgramsQuery.isLoading
+
+  const locations =
+    locationsQuery.data || []
+
+  const masterJobs =
+    useFilteredJobs(
+      masterJobsQuery.data || [],
+      viewType
+    )
 
   const {
 
-    handleClickCell,
-
-    handleSave,
+   handleSave,
 
   } = useScheduleActions({
 
+    workPrograms: allWorkPrograms,
+
     category: 'plan',
+
+    editingItem,
+
+    setEditingItem,
 
     viewType,
 
-    month,
-    year,
+    selectedType,
 
-    selectedDay,
+    month:
+      new Date().getMonth() + 1,
+
+    year:
+      new Date().getFullYear(),
+
+    selectedDates,
 
     selectedJobId,
 
@@ -165,54 +261,98 @@ const masterJobs =
     setLocation,
 
     setSubLocation,
+
   })
 
   return (
+
     <div className="p-6 space-y-5">
 
       {/* HEADER */}
-      <div className="flex items-center justify-between">
+
+      <div
+        className="
+          flex
+          items-center
+          justify-between
+        "
+      >
 
         <div>
 
           <h1
-            className="text-3xl font-bold
-                       text-gray-900
-                       flex items-center gap-3"
+            className="
+              flex
+              items-center
+              gap-3
+              text-3xl
+              font-bold
+              text-gray-900
+            "
           >
+
             <CalendarDays
-              className="w-7 h-7
-                         text-brand-600"
+              className="
+                h-7
+                w-7
+                text-brand-600
+              "
             />
 
             Program Kerja Cleaning
+
           </h1>
 
-          <p className="text-gray-500 mt-2">
+          <p
+            className="
+              mt-2
+              text-gray-500
+            "
+          >
             Timeline jadwal pekerjaan cleaning
           </p>
+
         </div>
 
         <button
+
           onClick={() => {
 
-            setSelectedDay(null)
+            setSelectedDates([])
 
-            setOpenModal(true)
+            setEditingItem(null)
+
+            setOpenTypeModal(
+              true
+            )
+
           }}
-          className="flex items-center gap-2
-                     bg-brand-600
-                     hover:bg-brand-700
-                     text-white
-                     px-5 py-3
-                     rounded-2xl
-                     transition-all"
+
+          className="
+            flex
+            items-center
+            gap-2
+            rounded-2xl
+            bg-brand-600
+            px-5
+            py-3
+            text-white
+            transition-all
+            hover:bg-brand-700
+          "
         >
 
-          <Plus className="w-5 h-5" />
+          <Plus
+            className="
+              h-5
+              w-5
+            "
+          />
 
           Tambah Jadwal
+
         </button>
+
       </div>
 
       <WorkProgramFilters
@@ -220,74 +360,181 @@ const masterJobs =
         viewType={viewType}
         setViewType={setViewType}
 
-        month={month}
-        setMonth={setMonth}
+        startDate={startDate}
+        setStartDate={setStartDate}
 
-        year={year}
-        setYear={setYear}
+        endDate={endDate}
+        setEndDate={setEndDate}
 
-        months={months}
+        selectedJob={selectedJob}
+
+        setSelectedJob={setSelectedJob}
+
+        masterJobs={masterJobs}
 
       />
 
       <CleaningTable
 
-        days={days}
-
-        data={data}
+        data={filteredData}
 
         isLoading={isLoading}
 
         viewType={viewType}
 
-        weekIndex={weekIndex}
+        onPreview={(item) => {
 
-        year={year}
+          setPreviewData(
+            item
+          )
 
-        month={month}
+          setOpenPreview(
+            true
+          )
 
-        setWeekIndex={setWeekIndex}
+        }}
 
-        handleClickCell={
-          handleClickCell
+        onEdit={(item) => {
+
+          setEditingItem(item)
+
+          setSelectedType(
+            item.plan
+          )
+
+          setSelectedJobId(
+            item.job_id
+          )
+
+          setArea(
+            item.area_name
+          )
+
+          setLocation(
+            item.location_name
+          )
+
+          setSubLocation(
+            item.sub_location
+          )
+
+          setSelectedDates(
+
+            item.scheduled_dates.map(
+              (day: number) =>
+
+                new Date(
+                  item.year,
+                  item.month - 1,
+                  day
+                )
+            )
+
+          )
+
+          setOpenModal(true)
+
+        }}
+
+        onDelete={(id) => {
+
+          deleteMutation.mutate(
+            id
+          )
+
+        }}
+
+      />
+
+      <AddScheduleModal
+
+        openModal={openModal}
+
+        setOpenModal={setOpenModal}
+
+        selectedJobId={selectedJobId}
+
+        setSelectedJobId={
+          setSelectedJobId
+        }
+
+        area={area}
+
+        setArea={setArea}
+
+        location={location}
+
+        setLocation={setLocation}
+
+        subLocation={subLocation}
+
+        setSubLocation={
+          setSubLocation
+        }
+
+        locations={locations}
+
+        masterJobs={masterJobs}
+
+        handleSave={handleSave}
+
+        editingItem={
+          editingItem
+        }
+
+        selectedDates={
+          selectedDates
+        }
+
+        setSelectedDates={
+          setSelectedDates
         }
 
       />
 
-     <AddScheduleModal
+      <TypeScheduleModal
 
-      openModal={openModal}
+        open={openTypeModal}
 
-      setOpenModal={setOpenModal}
+        onClose={() =>
+          setOpenTypeModal(
+            false
+          )
+        }
 
-      selectedJobId={selectedJobId}
+        onSelect={(type) => {
 
-      setSelectedJobId={
-        setSelectedJobId
-      }
+          setSelectedType(
+            type as any
+          )
 
-      area={area}
+          setOpenTypeModal(
+            false
+          )
 
-      setArea={setArea}
+          setOpenModal(
+            true
+          )
 
-      location={location}
+        }}
 
-      setLocation={setLocation}
+      />
 
-      subLocation={subLocation}
+      <PreviewScheduleModal
 
-      setSubLocation={
-        setSubLocation
-      }
+        open={openPreview}
 
-      locations={locations}
+        onClose={() =>
+          setOpenPreview(
+            false
+          )
+        }
 
-      masterJobs={masterJobs}
+        item={previewData}
 
-      handleSave={handleSave}
-
-     />
+      />
 
     </div>
+
   )
 }

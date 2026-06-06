@@ -9,20 +9,32 @@ import type {
 } from
 '@/features/work-program/types/workProgram'
 
+import toast from 'react-hot-toast'
+
 interface Props {
+
+  workPrograms: any[]
 
   category:
     'plan'
     | 'out_plan'
+  
+  editingItem: any
+
+  setEditingItem: any
 
   viewType: ViewType
+
+  selectedType:
+    'weekly'
+    | 'monthly'
 
   month: number
 
   year: number
 
-  selectedDay:
-    number | null
+  selectedDates:
+  Date[]
 
   selectedJobId:
     number | null
@@ -62,14 +74,20 @@ interface Props {
 
 export function useScheduleActions({
 
+  workPrograms,
+
   category,
 
-  viewType,
+  editingItem,
+
+  setEditingItem,
+
+  selectedType,
 
   month,
   year,
 
-  selectedDay,
+  selectedDates,
 
   selectedJobId,
 
@@ -211,95 +229,186 @@ export function useScheduleActions({
       return
     }
 
-    createMutation.mutate(
+    const payload = {
 
-      {
+      location_type_id: 7,
 
-        location_type_id:
+      area_id: 1,
 
-          viewType ===
-          'fogging'
+      area_name: area,
 
-            ? 8
+      location_name:
+        location,
 
-            : 7,
+      sub_location:
+        subLocation,
 
-        area_id: 1,
+      job_id:
+        selectedJobId,
 
-        area_name: area,
+      category,
 
-        location_name:
-          location,
+      plan: selectedType,
 
-        sub_location:
-          subLocation,
+      month,
 
-        job_id:
-          selectedJobId,
+      year,
 
-        /*
-        |--------------------------------------------------------------------------
-        | CATEGORY
-        |--------------------------------------------------------------------------
-        */
+      scheduled_dates:
+        selectedDates.map(
+          (date) =>
+            date.getDate()
+        ),
 
-        category,
+      status: 'pending',
 
-        /*
-        |--------------------------------------------------------------------------
-        | PLAN
-        |--------------------------------------------------------------------------
-        */
+      has_evidence: false,
+    }
 
-        plan:
-          viewType ===
-          'fogging'
+    const selectedDays =
 
-            ? 'monthly'
+      selectedDates.map(
+        (date) =>
+          date.getDate()
+      )
 
-            : viewType,
+    const duplicate =
 
-        month,
+      workPrograms.find(
+        (item) => {
 
-        year,
+          if (
+            editingItem &&
+            item.id ===
+            editingItem.id
+          ) {
+            return false
+          }
 
-        scheduled_dates:
-          selectedDay
-            ? [selectedDay]
-            : [],
+          const sameJob =
+            item.job_id ===
+            selectedJobId
 
-        status: 'pending',
+          const sameArea =
+            item.area_name ===
+            area
 
-        has_evidence: false,
-      },
+          const sameLocation =
+            item.location_name ===
+            location
 
-      {
-        onSuccess: () => {
+          const sameSubLocation =
+            item.sub_location ===
+            subLocation
 
-          /*
-          |--------------------------------------------------------------------------
-          | RESET FORM
-          |--------------------------------------------------------------------------
-          */
+          const samePlan =
+            item.plan ===
+            selectedType
 
-          setSelectedJobId(null)
+          const overlapDate =
 
-          setArea('')
+            item.scheduled_dates.some(
+              (day: number) =>
 
-          setLocation('')
+                selectedDays.includes(
+                  day
+                )
+            )
 
-          setSubLocation('')
+          return (
 
-          /*
-          |--------------------------------------------------------------------------
-          | CLOSE MODAL
-          |--------------------------------------------------------------------------
-          */
+            sameJob &&
 
-          setOpenModal(false)
+            sameArea &&
+
+            sameLocation &&
+
+            sameSubLocation &&
+
+            samePlan &&
+
+            overlapDate
+
+          )
+        }
+      )
+
+    if (duplicate) {
+
+      toast.error(
+        'Jadwal sudah ada pada tanggal yang dipilih'
+      )
+
+      return
+    }
+
+    if (editingItem) {
+
+      updateMutation.mutate(
+
+        {
+
+          id:
+            editingItem.id,
+
+          payload,
+
         },
-      }
-    )
+
+        {
+
+          onSuccess: () => {
+
+            setEditingItem(
+              null
+            )
+
+            setSelectedJobId(
+              null
+            )
+
+            setArea('')
+
+            setLocation('')
+
+            setSubLocation('')
+
+            setOpenModal(
+              false
+            )
+          },
+        }
+      )
+
+    } else {
+
+      createMutation.mutate(
+
+        payload,
+
+        {
+
+          onSuccess: () => {
+
+            setSelectedJobId(
+              null
+            )
+
+            setArea('')
+
+            setLocation('')
+
+            setSubLocation('')
+
+            setOpenModal(
+              false
+            )
+          },
+        }
+      )
+
+    }
+
   }
 
   return {

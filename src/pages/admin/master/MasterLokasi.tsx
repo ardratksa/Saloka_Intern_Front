@@ -9,6 +9,7 @@ import { FormModal } from '@/components/admin/FormModal'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import Swal from 'sweetalert2'
 
 import {
   Select,
@@ -595,13 +596,38 @@ export default function MasterLokasi() {
             </button>
 
             <button
-              onClick={() => {
+              onClick={async () => {
+
+                const result =
+
+                  await Swal.fire({
+
+                    title:
+                      'Hapus Lokasi?',
+
+                    text:
+                      'Data yang dihapus tidak dapat dikembalikan',
+
+                    icon:
+                      'warning',
+
+                    showCancelButton:
+                      true,
+
+                    confirmButtonText:
+                      'Ya, Hapus',
+
+                    cancelButtonText:
+                      'Batal',
+
+                    confirmButtonColor:
+                      '#dc2626',
+                  })
 
                 if (
-                  confirm(
-                    'Hapus lokasi ini?'
-                  )
+                  result.isConfirmed
                 ) {
+
                   deleteMut.mutate(
                     l.id
                   )
@@ -620,6 +646,106 @@ export default function MasterLokasi() {
           </div>
         )}
       />
+
+      <FormModal
+        open={openModal}
+        onClose={() => setOpenModal(false)}
+        title={editData ? 'Edit Lokasi' : 'Tambah Lokasi'}
+        onSubmit={() => {
+          if (!form.name || (!editData && !form.location_type_id)) {
+            toast.error('Semua field wajib diisi')
+            return
+          }
+          saveMut.mutate()
+        }}
+        isLoading={saveMut.isPending}
+      >
+        {!editData && (
+          <div>
+            <Label>Tipe Lokasi</Label>
+
+            <Select
+              value={form.location_type_id}
+              onValueChange={(v) =>
+                setForm({ ...form, location_type_id: v })
+              }
+            >
+              <SelectTrigger
+                className="mt-1 h-12 rounded-xl
+                          border border-[#e5e7eb]
+                          bg-white shadow-none"
+              >
+                <SelectValue placeholder="Pilih tipe..." />
+              </SelectTrigger>
+
+              <SelectContent
+                className="bg-white border border-[#ececec]
+                          rounded-xl shadow-lg"
+              >
+                {types.map((t) => (
+                  <SelectItem
+                    key={t.id}
+                    value={String(t.id)}
+                    className="rounded-lg cursor-pointer"
+                  >
+                    {t.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        <div>
+          <Label>Nama Lokasi</Label>
+          <Input
+            placeholder="Masukan nama lokasi"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            className="mt-1"
+          />
+        </div>
+        <div className="pt-2">
+          <Label>Status</Label>
+
+          <div className="flex items-center justify-between mt-2
+                          rounded-xl border border-gray-200 px-4 py-3">
+
+            <div>
+              <p className="text-sm font-medium text-gray-700">
+                Status Lokasi
+              </p>
+
+              <p className="text-xs text-gray-500 mt-0.5">
+                Aktifkan atau nonaktifkan lokasi
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                setForm({
+                  ...form,
+                  is_active: !form.is_active,
+                })
+              }
+              className={`relative w-12 h-6 rounded-full transition-all
+                ${form.is_active
+                  ? 'bg-green-500'
+                  : 'bg-gray-300'
+                }`}
+            >
+              <div
+                className={`absolute top-1 w-4 h-4 rounded-full bg-white
+                  transition-all
+                  ${form.is_active
+                    ? 'left-7'
+                    : 'left-1'
+                  }`}
+              />
+            </button>
+          </div>
+        </div>
+      </FormModal>
 
       {/* QR MODAL */}
       {qrData && (

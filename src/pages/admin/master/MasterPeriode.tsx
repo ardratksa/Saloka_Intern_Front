@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { Period } from '@/types'
+import Swal from 'sweetalert2'
 
 const EMPTY = {
   name: '',
@@ -135,8 +136,42 @@ export default function MasterPeriode() {
               <Pencil className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={() => {
-                if (confirm('Hapus periode ini?')) deleteMut.mutate(p.id)
+              onClick={async () => {
+
+                const result =
+
+                  await Swal.fire({
+
+                    title:
+                      'Hapus Periode?',
+
+                    text:
+                      'Data yang dihapus tidak dapat dikembalikan',
+
+                    icon:
+                      'warning',
+
+                    showCancelButton:
+                      true,
+
+                    confirmButtonText:
+                      'Ya, Hapus',
+
+                    cancelButtonText:
+                      'Batal',
+
+                    confirmButtonColor:
+                      '#dc2626',
+                  })
+
+                if (
+                  result.isConfirmed
+                ) {
+
+                  deleteMut.mutate(
+                    p.id
+                  )
+                }
               }}
               className="p-2 rounded-xl hover:bg-red-50 text-red-400
                          transition-colors"

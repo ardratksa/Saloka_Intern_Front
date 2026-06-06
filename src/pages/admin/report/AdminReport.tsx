@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { getWeeklyReport } from '@/api/weeklyReport'
+// import { useQuery } from '@tanstack/react-query'
+// import { getWeeklyReport } from '@/api/weeklyReport'
 import { DataTable } from '@/components/admin/DataTable'
 import { AlertTriangle, Download } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -16,10 +16,137 @@ const DAY_LABELS = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min']
 export default function AdminReport() {
   const [weekStart, setWeekStart] = useState(getMonday())
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['weekly-report', weekStart],
-    queryFn:  () => getWeeklyReport(weekStart),
-  })
+  const dummyData = {
+
+    week_end: '2026-06-07',
+
+    summary: {
+      total: 128,
+      done: 102,
+      pct: 80,
+      issues: 8,
+    },
+
+    daily_progress: {
+
+      sen:{ done:18,total:20,pct:90 },
+      sel:{ done:17,total:20,pct:85 },
+      rab:{ done:15,total:20,pct:75 },
+      kam:{ done:20,total:20,pct:100 },
+      jum:{ done:18,total:20,pct:90 },
+      sab:{ done:12,total:20,pct:60 },
+      min:{ done:10,total:20,pct:50 },
+
+    },
+
+    period_progress: [
+
+      {
+        period_id: 1,
+        period_name: 'Pagi 1',
+        time_start: '09:00',
+        done: 18,
+        total: 20,
+        pct: 90,
+      },
+
+      {
+        period_id: 2,
+        period_name: 'Pagi 2',
+        time_start: '11:00',
+        done: 16,
+        total: 20,
+        pct: 80,
+      },
+
+      {
+        period_id: 3,
+        period_name: 'Siang',
+        time_start: '14:00',
+        done: 14,
+        total: 20,
+        pct: 70,
+      },
+
+      {
+        period_id: 4,
+        period_name: 'Sore',
+        time_start: '17:00',
+        done: 20,
+        total: 20,
+        pct: 100,
+      },
+    ],
+
+    location_progress: [
+
+      {
+        location_id: 1,
+        location_name: 'Toilet Kamayayi',
+        type: 'Toilet',
+        done: 18,
+        total: 20,
+        pct: 90,
+        issue: 0,
+      },
+
+      {
+        location_id: 2,
+        location_name: 'Toilet Down Town',
+        type: 'Toilet',
+        done: 15,
+        total: 20,
+        pct: 75,
+        issue: 2,
+      },
+
+      {
+        location_id: 3,
+        location_name: 'Toilet Joglo',
+        type: 'Toilet',
+        done: 20,
+        total: 20,
+        pct: 100,
+        issue: 0,
+      },
+    ],
+
+    issues: [
+
+      {
+        id: 1,
+        type: 'Tissue Habis',
+        location: 'Toilet Kamayayi',
+        reported_by: 'Rudi',
+        date: '2026-06-03',
+        status: 'open',
+      },
+
+      {
+        id: 2,
+        type: 'Lantai Basah',
+        location: 'Toilet Down Town',
+        reported_by: 'Siti',
+        date: '2026-06-04',
+        status: 'in_progress',
+      },
+
+      {
+        id: 3,
+        type: 'Sabun Kosong',
+        location: 'Toilet Joglo',
+        reported_by: 'Ahmad',
+        date: '2026-06-05',
+        status: 'resolved',
+      },
+    ],
+  }
+
+  const data = dummyData
+  const isLoading = false
+
+  const reportData =
+  dummyData
 
   const changeWeek = (dir: number) => {
     const d = new Date(weekStart)
@@ -123,7 +250,7 @@ export default function AdminReport() {
         </button>
         <div className="flex-1 text-center">
           <p className="text-sm font-medium text-gray-900">
-            {weekStart} — {data?.week_end ?? '...'}
+            {weekStart} — {data.week_end}
           </p>
         </div>
         <button
@@ -145,7 +272,7 @@ export default function AdminReport() {
       ) : data ? (
         <>
           {/* Summary cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             {[
               {
                 label: 'Total Tugas',
@@ -170,6 +297,12 @@ export default function AdminReport() {
                 value: data.summary.issues,
                 color: 'text-red-500',
                 bg:    'bg-red-50',
+              },
+              {
+                label: 'Rata-rata Skor',
+                value: '88%',
+                color: 'text-green-700',
+                bg: 'bg-green-50',
               },
             ].map(({ label, value, color, bg }) => (
               <div key={label}

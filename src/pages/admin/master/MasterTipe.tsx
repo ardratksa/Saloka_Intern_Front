@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import type { LocationType } from '@/types'
+import Swal from 'sweetalert2'
 
 const EMPTY = {
   name: '',
@@ -111,8 +112,42 @@ export default function MasterTipe() {
               <Pencil className="w-3.5 h-3.5" />
             </button>
             <button
-              onClick={() => {
-                if (confirm('Hapus tipe ini?')) deleteMut.mutate(t.id)
+              onClick={async () => {
+
+                const result =
+
+                  await Swal.fire({
+
+                    title:
+                      'Hapus Tipe?',
+
+                    text:
+                      'Data yang dihapus tidak dapat dikembalikan',
+
+                    icon:
+                      'warning',
+
+                    showCancelButton:
+                      true,
+
+                    confirmButtonText:
+                      'Ya, Hapus',
+
+                    cancelButtonText:
+                      'Batal',
+
+                    confirmButtonColor:
+                      '#dc2626',
+                  })
+
+                if (
+                  result.isConfirmed
+                ) {
+
+                  deleteMut.mutate(
+                    t.id
+                  )
+                }
               }}
               className="p-1.5 rounded-lg hover:bg-red-50 text-red-400"
             >

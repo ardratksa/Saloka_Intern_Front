@@ -50,15 +50,25 @@ export function useWorkProgram(
           category,
 
           plan:
-            viewType ===
-            'fogging'
-              ? 'monthly'
-              : viewType,
+            viewType === 'all'
+              ? undefined
+              : viewType, 
 
           month,
           year,
         }),
     })
+
+    const allWorkProgramsQuery =
+      useQuery({
+
+        queryKey: [
+          'all-work-programs',
+        ],
+
+        queryFn: () =>
+          getWorkPrograms(),
+      })
 
   /*
   |--------------------------------------------------------------------------
@@ -166,6 +176,8 @@ export function useWorkProgram(
   return {
 
     workProgramsQuery,
+
+    allWorkProgramsQuery,
 
     masterJobsQuery,
 

@@ -48,19 +48,85 @@ export default function AdminDashboard() {
     refetchInterval: 30000,
   })
 
-  const summary: Summary = data?.summary ?? {
-    total: 0,
-    ok: 0,
-    perbaikan: 0,
-    tidak_ok: 0,
-    avg_score: 0,
+  const summary = {
+    total: 128,
+    ok: 102,
+    perbaikan: 18,
+    tidak_ok: 8,
+    avg_score: 88,
   }
 
-  const sessions: Session[] = (data?.sessions ?? []).filter((s: Session) => {
-    if (filterLoc !== 'all' && s.location !== filterLoc) return false
-    if (filterShift !== 'all' && s.shift_time !== filterShift) return false
-    return true
-  })
+  const dummySessions: Session[] = [
+
+    {
+      id: 1,
+      date: '26 Mei 2024',
+      time: '08:15',
+      location: 'Toilet Pesisir',
+      location_type: 'Toilet',
+      shift: 'Pagi',
+      shift_time: 'Pagi',
+      pic: 'Rudi Hartono',
+      total: 20,
+      done: 20,
+      issue: 0,
+      score: 100,
+      status: 'OK',
+    },
+
+    {
+      id: 2,
+      date: '26 Mei 2024',
+      time: '13:10',
+      location: 'Toilet Rimba Resto',
+      location_type: 'Toilet',
+      shift: 'Siang',
+      shift_time: 'Siang',
+      pic: 'Siti Aminah',
+      total: 20,
+      done: 15,
+      issue: 5,
+      score: 75,
+      status: 'Perlu Perbaikan',
+    },
+
+    {
+      id: 3,
+      date: '26 Mei 2024',
+      time: '18:20',
+      location: 'Toilet Kamayayi',
+      location_type: 'Toilet',
+      shift: 'Malam',
+      shift_time: 'Malam',
+      pic: 'Ahmad Fauzi',
+      total: 20,
+      done: 12,
+      issue: 8,
+      score: 60,
+      status: 'Tidak OK',
+    },
+  ]
+
+  const sessions =
+
+    dummySessions.filter((s) => {
+
+      if (
+        filterLoc !== 'all' &&
+        s.location !== filterLoc
+      ) {
+        return false
+      }
+
+      if (
+        filterShift !== 'all' &&
+        s.shift_time !== filterShift
+      ) {
+        return false
+      }
+
+      return true
+    })
 
   const locations = Array.from(
     new Set(

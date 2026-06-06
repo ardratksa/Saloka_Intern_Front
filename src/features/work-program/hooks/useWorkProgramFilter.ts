@@ -7,9 +7,6 @@ import type {
 
 export function useWorkProgramFilter() {
 
-  const currentDate =
-    new Date()
-
   /*
   |--------------------------------------------------------------------------
   | VIEW TYPE
@@ -20,44 +17,52 @@ export function useWorkProgramFilter() {
     viewType,
     setViewType,
   ] = useState<ViewType>(
-    'weekly'
+    'all'
   )
 
   /*
   |--------------------------------------------------------------------------
-  | MONTH
+  | DATE RANGE
   |--------------------------------------------------------------------------
   */
 
   const [
-    month,
-    setMonth,
-  ] = useState(
-    currentDate.getMonth() + 1
+    startDate,
+    setStartDate,
+  ] = useState<Date | null>(
+    null
+  )
+
+  const [
+    endDate,
+    setEndDate,
+  ] = useState<Date | null>(
+    null
   )
 
   /*
   |--------------------------------------------------------------------------
-  | YEAR
+  | JOB FILTER
   |--------------------------------------------------------------------------
   */
 
   const [
-    year,
-    setYear,
-  ] = useState(
-    currentDate.getFullYear()
-  )
+    selectedJob,
+    setSelectedJob,
+  ] = useState('')
 
   return {
 
     viewType,
     setViewType,
 
-    month,
-    setMonth,
+    startDate,
+    setStartDate,
 
-    year,
-    setYear,
+    endDate,
+    setEndDate,
+
+    selectedJob,
+    setSelectedJob,
   }
 }
