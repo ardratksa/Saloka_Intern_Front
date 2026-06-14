@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getDailySummary } from '@/api/checklist'
+import { getIssues } from '@/api/issue'
+import { getLocations } from '@/api/location'
+import { getPeriods } from '@/api/period'
 import {
   ClipboardCheck,
   AlertTriangle,
@@ -9,6 +12,20 @@ import {
   Eye,
   Download,
 } from 'lucide-react'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
 
 type Session = {
   id: number
@@ -39,78 +56,49 @@ export default function AdminDashboard() {
 
   const [dateFrom, setDateFrom] = useState(today)
   const [filterLoc, setFilterLoc] = useState('all')
+  const [openLocation, setOpenLocation] = useState(false)
   const [filterShift, setFilterShift] = useState('all')
   const [detail, setDetail] = useState<Session | null>(null)
+  const { data: issues = [] } = useQuery({
+  queryKey: ['dashboard-issues'],
+  queryFn: () => getIssues(),
+})
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading } = useQuery<{
+    summary: {
+      total: number
+      ok: number
+      perbaikan: number
+      tidak_ok: number
+      avg_score: number
+    }
+    sessions: Session[]
+  }>({
     queryKey: ['daily-summary', dateFrom],
     queryFn: () => getDailySummary(dateFrom),
     refetchInterval: 30000,
   })
 
-  const summary = {
-    total: 128,
-    ok: 102,
-    perbaikan: 18,
-    tidak_ok: 8,
-    avg_score: 88,
+  const { data: masterLocations = [] } = useQuery({
+    queryKey: ['master-locations'],
+    queryFn: () => getLocations(),
+  })
+
+  const { data: periods = [] } = useQuery({
+    queryKey: ['periods'],
+    queryFn: getPeriods,
+  })
+
+  const summary = data?.summary ?? {
+    total: 0,
+    ok: 0,
+    perbaikan: 0,
+    tidak_ok: 0,
+    avg_score: 0,
   }
 
-  const dummySessions: Session[] = [
-
-    {
-      id: 1,
-      date: '26 Mei 2024',
-      time: '08:15',
-      location: 'Toilet Pesisir',
-      location_type: 'Toilet',
-      shift: 'Pagi',
-      shift_time: 'Pagi',
-      pic: 'Rudi Hartono',
-      total: 20,
-      done: 20,
-      issue: 0,
-      score: 100,
-      status: 'OK',
-    },
-
-    {
-      id: 2,
-      date: '26 Mei 2024',
-      time: '13:10',
-      location: 'Toilet Rimba Resto',
-      location_type: 'Toilet',
-      shift: 'Siang',
-      shift_time: 'Siang',
-      pic: 'Siti Aminah',
-      total: 20,
-      done: 15,
-      issue: 5,
-      score: 75,
-      status: 'Perlu Perbaikan',
-    },
-
-    {
-      id: 3,
-      date: '26 Mei 2024',
-      time: '18:20',
-      location: 'Toilet Kamayayi',
-      location_type: 'Toilet',
-      shift: 'Malam',
-      shift_time: 'Malam',
-      pic: 'Ahmad Fauzi',
-      total: 20,
-      done: 12,
-      issue: 8,
-      score: 60,
-      status: 'Tidak OK',
-    },
-  ]
-
   const sessions =
-
-    dummySessions.filter((s) => {
-
+    (data?.sessions ?? []).filter((s: Session) => {
       if (
         filterLoc !== 'all' &&
         s.location !== filterLoc
@@ -120,7 +108,7 @@ export default function AdminDashboard() {
 
       if (
         filterShift !== 'all' &&
-        s.shift_time !== filterShift
+        s.shift !== filterShift
       ) {
         return false
       }
@@ -128,17 +116,9 @@ export default function AdminDashboard() {
       return true
     })
 
-  const locations = Array.from(
-    new Set(
-      (data?.sessions ?? []).map((s: Session) => s.location)
-    )
-  ) as string[]
+  const locations = masterLocations
 
-  const shiftTimes = Array.from(
-    new Set(
-      (data?.sessions ?? []).map((s: Session) => s.shift_time)
-    )
-  ) as string[]
+  const shiftTimes = periods
 
   const statusColor = (status: string) => {
     if (status === 'OK') {
@@ -157,6 +137,15 @@ export default function AdminDashboard() {
     if (score >= 60) return 'text-yellow-600'
     return 'text-red-600'
   }
+
+  const sessionIssues = detail
+    ? issues.filter((i: any) => {
+        return (
+          i.location === detail.location &&
+          i.date === detail.date
+        )
+      })
+    : []
 
   return (
     <div className="p-6 space-y-5">
@@ -180,40 +169,140 @@ export default function AdminDashboard() {
           type="date"
           value={dateFrom}
           onChange={(e) => setDateFrom(e.target.value)}
-          className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
+          className="
+            h-12
+            w-48
+            rounded-xl
+            border
+            border-gray-200
+            px-4
+          "
         />
 
-        <select
-          value={filterLoc}
-          onChange={(e) => setFilterLoc(e.target.value)}
-          className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
+        <Popover
+          open={openLocation}
+          onOpenChange={setOpenLocation}
         >
-          <option value="all">Semua Lokasi</option>
+          <PopoverTrigger asChild>
+            <button
+              className="
+                w-64
+                border
+                border-gray-200
+                rounded-xl
+                px-3
+                py-2
+                text-left
+                bg-white
+              "
+            >
+              {filterLoc === 'all'
+                ? 'Semua Lokasi'
+                : filterLoc}
+            </button>
+          </PopoverTrigger>
 
-          {locations.map((loc) => (
-            <option key={loc} value={loc}>
-              {loc}
-            </option>
-          ))}
-        </select>
+          <PopoverContent
+            align="start"
+          className="
+            w-64
+            p-0
+            bg-white
+            border
+            shadow-lg
+            z-[9999]
+          "
+          >
+            <Command
+              className="bg-white"
+            >
 
-        <select
+              <CommandInput
+                placeholder="Cari lokasi..."
+              />
+
+              <CommandList
+                className="
+                  max-h-[300px]
+                  bg-white
+                "
+              >
+
+                <CommandEmpty>
+                  Lokasi tidak ditemukan
+                </CommandEmpty>
+
+                <CommandGroup>
+
+                  <CommandItem
+                    onSelect={() => {
+                      setFilterLoc('all')
+                      setOpenLocation(false)
+                    }}
+                  >
+                    Semua Lokasi
+                  </CommandItem>
+
+                  {masterLocations.map((loc) => (
+                    <CommandItem
+                      key={loc.id}
+                      onSelect={() => {
+                        setFilterLoc(loc.name)
+                        setOpenLocation(false)
+                      }}
+                    >
+                      {loc.name}
+                    </CommandItem>
+                  ))}
+
+                </CommandGroup>
+
+              </CommandList>
+
+            </Command>
+          </PopoverContent>
+        </Popover>
+
+       <select
           value={filterShift}
           onChange={(e) => setFilterShift(e.target.value)}
-          className="border border-gray-200 rounded-xl px-3 py-2 text-sm"
+          className="
+            h-12
+            w-44
+            rounded-xl
+            border
+            border-gray-200
+            px-4
+            bg-white
+          "
         >
-          <option value="all">Semua Shift</option>
+          <option value="all">
+            Semua Shift
+          </option>
 
-          {shiftTimes.map((shift) => (
-            <option key={shift} value={shift}>
-              {shift}
+          {shiftTimes.map((period) => (
+            <option
+              key={period.id}
+              value={period.name}
+            >
+              {period.name}
             </option>
           ))}
         </select>
 
         <button
           onClick={() => window.print()}
-          className="ml-auto flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-sm"
+          className="
+            ml-auto
+            h-12
+            px-5
+            rounded-xl
+            border
+            border-gray-200
+            flex
+            items-center
+            gap-2
+          "
         >
           <Download className="w-4 h-4" />
           Export
@@ -330,7 +419,7 @@ export default function AdminDashboard() {
                   </td>
                 </tr>
               ) : (
-                sessions.map((s, i) => (
+                sessions.map((s: Session, i: number) => (
                   <tr
                     key={s.id}
                     className="border-t border-gray-100 hover:bg-gray-50"
@@ -393,62 +482,154 @@ export default function AdminDashboard() {
           </table>
         </div>
       </div>
-
       {/* MODAL DETAIL */}
       {detail && (
         <div
-          className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
+          className="
+            fixed inset-0
+            bg-black/50
+            z-50
+            overflow-hidden
+            flex items-center justify-center
+            p-4
+          "
           onClick={() => setDetail(null)}
         >
           <div
-            className="bg-white rounded-2xl p-6 w-full max-w-md"
+            className="
+             bg-white
+    rounded-2xl
+    p-6
+    w-full
+    max-w-3xl
+    max-h-[85vh]
+    overflow-y-auto
+    pr-4
+    scrollbar-thin
+  "
             onClick={(e) => e.stopPropagation()}
           >
-
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-bold">
-                Detail Checklist
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold">
+                Detail Session
               </h2>
 
               <button
                 onClick={() => setDetail(null)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-500"
               >
                 ✕
               </button>
             </div>
 
-            <div className="space-y-3 text-sm">
-
-              <div className="flex justify-between">
-                <span className="text-gray-500">Lokasi</span>
-                <span className="font-medium">{detail.location}</span>
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div>
+                <p className="text-gray-500 text-sm">
+                  Lokasi
+                </p>
+                <p className="font-semibold">
+                  {detail.location}
+                </p>
               </div>
 
-              <div className="flex justify-between">
-                <span className="text-gray-500">Tanggal</span>
-                <span className="font-medium">{detail.date}</span>
+              <div>
+                <p className="text-gray-500 text-sm">
+                  PIC
+                </p>
+                <p className="font-semibold">
+                  {detail.pic}
+                </p>
               </div>
 
-              <div className="flex justify-between">
-                <span className="text-gray-500">Shift</span>
-                <span className="font-medium">{detail.shift}</span>
+              <div>
+                <p className="text-gray-500 text-sm">
+                  Shift
+                </p>
+                <p className="font-semibold">
+                  {detail.shift}
+                </p>
               </div>
 
-              <div className="flex justify-between">
-                <span className="text-gray-500">PIC</span>
-                <span className="font-medium">{detail.pic}</span>
-              </div>
-
-              <div className="flex justify-between">
-                <span className="text-gray-500">Score</span>
-                <span className={`font-bold ${scoreColor(detail.score)}`}>
+              <div>
+                <p className="text-gray-500 text-sm">
+                  Score
+                </p>
+                <p className="font-semibold">
                   {detail.score}%
-                </span>
+                </p>
               </div>
-
             </div>
 
+            <hr className="mb-6" />
+
+            <h3 className="font-bold mb-4">
+              Issue Ditemukan
+            </h3>
+
+            {sessionIssues.length === 0 ? (
+              <div className="text-center text-gray-400 py-8">
+                Tidak ada issue
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {sessionIssues.map((issue: any) => (
+                  <div
+                    key={issue.id}
+                    className="
+                      border
+                      rounded-xl
+                      p-4
+                    "
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <p className="font-semibold">
+                          {issue.type}
+                        </p>
+
+                        <p className="text-sm text-gray-500">
+                          {issue.location}
+                        </p>
+                      </div>
+
+                      <span
+                        className="
+                          px-3 py-1
+                          rounded-full
+                          text-xs
+                          bg-red-100
+                          text-red-600
+                        "
+                      >
+                        {issue.status}
+                      </span>
+                    </div>
+
+                    <p className="mb-3">
+                      {issue.description}
+                    </p>
+
+                    {issue.photos?.length > 0 && (
+                      <div className="grid grid-cols-3 gap-2">
+                        {issue.photos.map((p: any) => (
+                          <img
+                            key={p.id}
+                            src={p.image_url}
+                            alt=""
+                            className="
+                              h-28
+                              w-full
+                              object-cover
+                              rounded-lg
+                            "
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

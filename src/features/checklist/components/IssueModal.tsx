@@ -1,97 +1,107 @@
-import { useState } from "react"
+import { useState } from 'react'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from '@/components/ui/dialog'
 
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { Input } from "@/components/ui/input"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
+import toast from 'react-hot-toast'
 
 type Props = {
   open: boolean
   onClose: () => void
   onSubmit: (data: {
-    type: string
     description: string
-    image?: string
+    file: File
   }) => void
 }
 
-export default function IssueModal({ open, onClose, onSubmit }: Props) {
-  const [type, setType] = useState("")
-  const [description, setDescription] = useState("")
-  const [image, setImage] = useState<string | undefined>()
+export default function IssueModal({
+  open,
+  onClose,
+  onSubmit,
+}: Props) {
+  const [description, setDescription] = useState('')
+  const [file, setFile] = useState<File | null>(null)
+  const [preview, setPreview] = useState('')
 
-  // 🔥 HANDLE IMAGE
-  const handleImage = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const handleImage = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const img = e.target.files?.[0]
 
-    const url = URL.createObjectURL(file)
-    setImage(url)
+    if (!img) return
+
+    setFile(img)
+    setPreview(URL.createObjectURL(img))
+  }
+
+  const handleSubmit = () => {
+    if (!description.trim()) {
+      toast.error('Deskripsi wajib diisi')
+      return
+    }
+
+    if (!file) {
+      toast.error('Foto wajib diupload')
+      return
+    }
+
+    onSubmit({
+      description,
+      file,
+    })
+
+    setDescription('')
+    setFile(null)
+    setPreview('')
+    onClose()
   }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="rounded-3xl">
         <DialogHeader>
-          <DialogTitle>Laporkan Issue</DialogTitle>
+          <DialogTitle>
+            Laporkan Issue
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
 
-          {/* TYPE */}
-          <Select onValueChange={setType}>
-            <SelectTrigger>
-              <SelectValue placeholder="Pilih jenis issue" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="kerusakan">Kerusakan</SelectItem>
-              <SelectItem value="kotor">Kotor</SelectItem>
-              <SelectItem value="lainnya">Lainnya</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* DESKRIPSI */}
           <Textarea
-            placeholder="Deskripsi..."
+            placeholder="Jelaskan masalah yang ditemukan..."
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e) =>
+              setDescription(e.target.value)
+            }
           />
 
-          {/* UPLOAD */}
-          <Input type="file" accept="image/*" onChange={handleImage} />
+          <Input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleImage}
+          />
 
-          {/* PREVIEW */}
-          {image && (
+          {preview && (
             <img
-              src={image}
-              className="w-full h-40 object-cover rounded-lg border"
+              src={preview}
+              className="w-full h-48 object-cover rounded-xl border"
             />
           )}
 
-          {/* BUTTON */}
           <Button
-            onClick={() => {
-              onSubmit({ type, description, image })
-              setType("")
-              setDescription("")
-              setImage(undefined)
-            }}
+            onClick={handleSubmit}
             className="w-full"
           >
-            Simpan Issue
+            Kirim Issue
           </Button>
+
         </div>
       </DialogContent>
     </Dialog>

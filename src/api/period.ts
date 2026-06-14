@@ -5,3 +5,8 @@ export const getPeriods = async (): Promise<Period[]> => {
   const res = await api.get('/periods')
   return res.data as Period[]
 }
+
+export const getActivePeriod = async (): Promise<Period> => {
+  const res = await api.get('/periods/active')
+  return res.data as Period
+}

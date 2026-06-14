@@ -77,15 +77,21 @@ export default function StaffLayout() {
       </header>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto pb-24">
+      <div
+        className="
+          flex-1
+          overflow-y-auto
+          pb-24
+        "
+      >
         <Outlet />
       </div>
 
       {/* Bottom Navigation */}
       <nav
         className="fixed bottom-0 left-0 right-0 max-w-md mx-auto
-                   bg-white/95 backdrop-blur border-t border-gray-200
-                   z-50 safe-area-pb"
+                  bg-white/95 backdrop-blur border-t border-gray-200
+                  z-20 safe-area-pb"
       >
         <div className="flex items-center justify-around px-2 py-2">
           {NAV.map(({ to, label, icon: Icon }) => (

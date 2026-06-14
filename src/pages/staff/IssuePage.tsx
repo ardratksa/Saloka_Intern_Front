@@ -64,6 +64,9 @@ export default function IssuePage() {
 
   const [openCreate, setOpenCreate] = useState(false)
   const [filterStatus, setFilterStatus] = useState('all')
+  const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null)
+
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
 
   // Form state
   const [form, setForm] = useState({
@@ -303,8 +306,20 @@ export default function IssuePage() {
       ) : (
         <div className="space-y-3">
           {issues?.map((issue: Issue) => (
-            <div key={issue.id}
-                 className="bg-white rounded-xl border border-gray-200 p-4">
+            <div
+              key={issue.id}
+              onClick={() => setSelectedIssue(issue)}
+              className="
+                bg-white
+                rounded-xl
+                border
+                border-gray-200
+                p-4
+                cursor-pointer
+                hover:border-brand-300
+                transition-all
+              "
+            >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
@@ -344,9 +359,19 @@ export default function IssuePage() {
                         <img
                           key={p.id}
                           src={p.image_url}
-                          className="w-12 h-12 rounded-lg object-cover
-                                     border border-gray-200"
-                          alt="issue"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setPreviewImage(p.image_url)
+                          }}
+                          className="
+                            w-12 h-12
+                            rounded-lg
+                            object-cover
+                            border
+                            border-gray-200
+                            cursor-pointer
+                          "
+                          alt=""
                         />
                       ))}
                     </div>
@@ -377,6 +402,155 @@ export default function IssuePage() {
           ))}
         </div>
       )}
+      {/* Detail Issue */}
+        <Dialog
+          open={!!selectedIssue}
+          onOpenChange={() => setSelectedIssue(null)}
+        >
+          <DialogContent
+            className="
+              max-w-2xl
+              bg-white
+              border
+              border-gray-200
+              shadow-2xl
+              rounded-3xl
+              p-6
+            "
+          >
+
+            <DialogHeader>
+              <DialogTitle>
+                Detail Issue
+              </DialogTitle>
+            </DialogHeader>
+
+            {selectedIssue && (
+              <div className="space-y-4">
+
+                <div className="flex items-center gap-2">
+
+                  <span
+                    className={cn(
+                      'px-2 py-1 rounded-full text-xs font-medium',
+                      statusClass[selectedIssue.status]
+                    )}
+                  >
+                    {statusLabel[selectedIssue.status]}
+                  </span>
+
+                </div>
+
+                <div>
+                  <p className="text-sm text-gray-500">
+                    Jenis Issue
+                  </p>
+
+                  <p className="font-medium">
+                    {selectedIssue.type}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-sm text-gray-500">
+                    Lokasi
+                  </p>
+
+                  <p className="font-medium">
+                    {selectedIssue.location}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-sm text-gray-500">
+                    Deskripsi
+                  </p>
+
+                  <p>
+                    {selectedIssue.description || '-'}
+                  </p>
+                </div>
+
+
+                {selectedIssue.photos.length > 0 && (
+                  <div>
+
+                    <p className="text-sm text-gray-500 mb-2">
+                      Dokumentasi
+                    </p>
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+
+                      {selectedIssue.photos.map((p) => (
+                        <img
+                          key={p.id}
+                          src={p.image_url}
+                          onClick={() =>
+                            setPreviewImage(p.image_url)
+                          }
+                          className="
+                            h-40
+                            w-full
+                            object-cover
+                            rounded-2xl
+                            border
+                            border-gray-200
+                            cursor-pointer
+                            hover:scale-[1.02]
+                            transition-all
+                          "
+                          alt=""
+                        />
+                      ))}
+
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            )}
+
+          </DialogContent>
+        </Dialog>
+        {previewImage && (
+          <div
+            className="
+              fixed
+              inset-0
+              bg-black/95
+              z-[9999]
+              flex
+              items-center
+              justify-center
+              p-4
+            "
+            onClick={() => setPreviewImage(null)}
+          >
+            <button
+              className="
+                absolute
+                top-5
+                right-5
+                text-white
+                text-3xl
+                font-bold
+              "
+            >
+              ×
+            </button>
+
+            <img
+              src={previewImage}
+              alt=""
+              className="
+                max-w-[95vw]
+                max-h-[90vh]
+                object-contain
+                rounded-xl
+              "
+            />
+          </div>
+        )}
     </div>
   )
 }

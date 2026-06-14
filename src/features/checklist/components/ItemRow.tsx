@@ -1,4 +1,4 @@
-import { Checkbox } from "@/components/ui/checkbox"
+import { CheckCircle2, AlertTriangle } from 'lucide-react'
 
 type Item = {
   id: number
@@ -7,42 +7,71 @@ type Item = {
   hasIssue: boolean
 }
 
+type Props = {
+  item: Item
+  onToggle: (id: number) => void
+  onReport: (id: number) => void
+}
+
 export default function ItemRow({
   item,
   onToggle,
   onReport,
-}: {
-  item: Item
-  onToggle: (id: number) => void
-  onReport: (id: number) => void
-}) {
+}: Props) {
   return (
     <div
-      className={`flex items-center justify-between border rounded-lg px-3 py-2 ${
-        item.hasIssue ? "border-red-400" : ""
-      }`}
+      className={`
+        rounded-2xl border p-4 bg-white transition-all
+        ${item.hasIssue
+          ? 'border-red-300 bg-red-50'
+          : item.done
+          ? 'border-green-300 bg-green-50'
+          : 'border-gray-200'}
+      `}
     >
-      <div className="flex items-center gap-2">
-        <Checkbox
-          checked={item.done}
-          onCheckedChange={() => onToggle(item.id)}
-        />
-
-        <span
-          className={`text-sm ${
-            item.done ? "line-through text-muted-foreground" : ""
-          }`}
+      <div className="mb-3">
+        <p
+          className={`
+            text-sm font-medium
+            ${item.done ? 'text-green-700' : 'text-gray-800'}
+          `}
         >
           {item.name}
-        </span>
+        </p>
       </div>
 
-      <button
-        onClick={() => onReport(item.id)}
-        className="text-yellow-500 text-sm"
-      >
-        ⚠️
-      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={() => onToggle(item.id)}
+          className={`
+            flex-1 h-11 rounded-xl text-sm font-semibold
+            flex items-center justify-center gap-2
+            transition-all
+            ${
+              item.done
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-100 text-gray-700'
+            }
+          `}
+        >
+          <CheckCircle2 className="w-4 h-4" />
+          {item.done ? 'Sudah Dicek' : 'Checklist'}
+        </button>
+
+        <button
+          onClick={() => onReport(item.id)}
+          className="h-11 px-4 rounded-xl bg-amber-100 text-amber-700
+                     flex items-center justify-center"
+        >
+          <AlertTriangle className="w-5 h-5" />
+        </button>
+      </div>
+
+      {item.hasIssue && (
+        <div className="mt-3 text-xs font-medium text-red-600">
+          Issue telah dilaporkan
+        </div>
+      )}
     </div>
   )
 }

@@ -1,9 +1,11 @@
 import { useState } from 'react'
-// import { useQuery } from '@tanstack/react-query'
-// import { getWeeklyReport } from '@/api/weeklyReport'
+import { useQuery, useMutation, useQueryClient, } from '@tanstack/react-query'
+import { getIssues, updateIssueStatus, } from '@/api/issue'
+import toast from 'react-hot-toast'
 import { DataTable } from '@/components/admin/DataTable'
 import { AlertTriangle, Download } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import type { Issue } from '@/types'
 
 function getMonday(d = new Date()) {
   const day  = d.getDay()
@@ -14,7 +16,44 @@ function getMonday(d = new Date()) {
 const DAY_LABELS = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min']
 
 export default function AdminReport() {
+  const [showIssueModal, setShowIssueModal] = useState(false)
+
+  const [selectedIssue, setSelectedIssue] = useState<any>(null)
+
+  const [selectedStatus, setSelectedStatus] = useState('')
+
   const [weekStart, setWeekStart] = useState(getMonday())
+
+  const queryClient = useQueryClient()
+
+  const { data: issues = [] } = useQuery<Issue[]>({
+    queryKey: ['issues'],
+    queryFn: () => getIssues({}),
+  })
+
+  const updateStatusMut = useMutation({
+    mutationFn: ({
+      id,
+      status,
+    }: {
+      id: number
+      status: 'open' | 'in_progress' | 'resolved'
+    }) => updateIssueStatus(id, status),
+
+    onSuccess: () => {
+      toast.success('Status berhasil diperbarui')
+
+      queryClient.invalidateQueries({
+        queryKey: ['issues'],
+      })
+
+      setShowIssueModal(false)
+    },
+
+    onError: () => {
+      toast.error('Gagal update status')
+    },
+  })
 
   const dummyData = {
 
@@ -111,35 +150,6 @@ export default function AdminReport() {
       },
     ],
 
-    issues: [
-
-      {
-        id: 1,
-        type: 'Tissue Habis',
-        location: 'Toilet Kamayayi',
-        reported_by: 'Rudi',
-        date: '2026-06-03',
-        status: 'open',
-      },
-
-      {
-        id: 2,
-        type: 'Lantai Basah',
-        location: 'Toilet Down Town',
-        reported_by: 'Siti',
-        date: '2026-06-04',
-        status: 'in_progress',
-      },
-
-      {
-        id: 3,
-        type: 'Sabun Kosong',
-        location: 'Toilet Joglo',
-        reported_by: 'Ahmad',
-        date: '2026-06-05',
-        status: 'resolved',
-      },
-    ],
   }
 
   const data = dummyData
@@ -155,28 +165,54 @@ export default function AdminReport() {
   }
 
   const issueColumns = [
-    { key: 'type',        label: 'Jenis Issue' },
-    { key: 'location',    label: 'Lokasi'      },
-    { key: 'reported_by', label: 'Dilaporkan'  },
-    { key: 'date',        label: 'Tanggal'     },
+    { key: 'type', label: 'Jenis Issue' },
+    { key: 'location', label: 'Lokasi' },
+    { key: 'reported_by', label: 'Dilaporkan' },
+    { key: 'date', label: 'Tanggal' },
+
     {
       key: 'status',
       label: 'Status',
-      render: (i: { status: string }) => (
-        <span className={cn(
-          'text-xs px-2 py-0.5 rounded-full font-medium',
-          i.status === 'resolved'
-            ? 'bg-green-100 text-green-700'
-            : i.status === 'in_progress'
-            ? 'bg-yellow-100 text-yellow-700'
-            : 'bg-red-100 text-red-700'
-        )}>
+      render: (i: any) => (
+        <span
+          className={cn(
+            'text-xs px-2 py-0.5 rounded-full font-medium',
+            i.status === 'resolved'
+              ? 'bg-green-100 text-green-700'
+              : i.status === 'in_progress'
+              ? 'bg-yellow-100 text-yellow-700'
+              : 'bg-red-100 text-red-700'
+          )}        >
           {i.status === 'resolved'
             ? 'Resolved'
             : i.status === 'in_progress'
             ? 'In Progress'
             : 'Open'}
         </span>
+      ),
+    },
+
+    {
+      key: 'action',
+      label: 'Aksi',
+      render: (i: any) => (
+        <button
+          onClick={() => {
+            setSelectedIssue(i)
+            setSelectedStatus(i.status)
+            setShowIssueModal(true)
+          }}
+          className="
+            px-3 py-1
+            rounded-lg
+            bg-brand-600
+            text-white
+            text-xs
+            font-medium
+          "
+        >
+          Detail
+        </button>
       ),
     },
   ]
@@ -400,19 +436,30 @@ export default function AdminReport() {
           </div>
 
           {/* Issues table */}
-          {data.issues.length > 0 && (
-            <div className="bg-white rounded-xl border border-gray-200
-                            overflow-hidden">
+          {issues.length > 0 && (
+            <div
+              className="
+                bg-white
+                rounded-xl
+                border
+                border-gray-200
+                overflow-hidden
+              "
+            >
               <DataTable
                 title="Issues Minggu Ini"
-                data={data.issues.map((i) => ({ ...i, id: i.id }))}
+                data={issues.map((i) => ({
+                  ...i,
+                  id: i.id,
+                }))}
                 columns={issueColumns}
                 searchPlaceholder="Cari issue..."
                 headerRight={
                   <div className="flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 text-red-500" />
+
                     <span className="text-sm text-red-600 font-medium">
-                      {data.issues.length} issue
+                      {issues.length} issue
                     </span>
                   </div>
                 }
@@ -421,6 +468,120 @@ export default function AdminReport() {
           )}
         </>
       ) : null}
+
+      {showIssueModal && selectedIssue && (
+        <div
+          className="
+            fixed inset-0
+            bg-black/40
+            flex items-center justify-center
+            z-50
+          "
+        >
+          <div
+            className="
+              bg-white
+              rounded-2xl
+              w-full
+              max-w-lg
+              p-6
+            "
+          >
+            <h3 className="text-lg font-bold mb-4">
+              Detail Issue
+            </h3>
+
+            <div className="space-y-3 text-sm">
+              <div>
+                <b>Jenis:</b> {selectedIssue.type}
+              </div>
+
+              <div>
+                <b>Lokasi:</b> {selectedIssue.location}
+              </div>
+
+              <div>
+                <b>Pelapor:</b> {selectedIssue.reported_by}
+              </div>
+
+              <div>
+                <b>Tanggal:</b> {selectedIssue.date}
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <label className="text-sm font-medium">
+                Status
+              </label>
+
+              <select
+                className="
+                  mt-2
+                  w-full
+                  border
+                  rounded-lg
+                  h-11
+                  px-3
+                "
+                value={selectedStatus}
+                onChange={(e) =>
+                  setSelectedStatus(e.target.value)
+                }
+              >
+                <option value="open">
+                  Open
+                </option>
+
+                <option value="in_progress">
+                  In Progress
+                </option>
+
+                <option value="resolved">
+                  Resolved
+                </option>
+              </select>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowIssueModal(false)}
+                className="
+                  flex-1
+                  h-11
+                  border
+                  rounded-lg
+                "
+              >
+                Tutup
+              </button>
+
+              <button
+                onClick={() =>
+                  updateStatusMut.mutate({
+                    id: selectedIssue.id,
+                    status: selectedStatus as
+                      | 'open'
+                      | 'in_progress'
+                      | 'resolved',
+                  })
+                }
+                disabled={updateStatusMut.isPending}
+                className="
+                  flex-1
+                  h-11
+                  bg-green-600
+                  text-white
+                  rounded-lg
+                "
+              >
+                {updateStatusMut.isPending
+                  ? 'Menyimpan...'
+                  : 'Simpan'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,16 +1,23 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/authStore'
-import { getChecklist, updateChecklist, uploadChecklistDoc } from '@/api/checklist'
-import { getPeriods } from '@/api/period'
+import { getChecklist, updateChecklist } from '@/api/checklist'
+import { getActivePeriod } from '@/api/period'
+import { createIssue } from '@/api/issue'
 import { useNavigate } from 'react-router-dom'
 import {
-  CheckCircle2, Circle, AlertTriangle,
-  Camera, MapPin, Clock, QrCode, Loader2,
+  CheckCircle2,
+  Circle,
+  AlertTriangle,
+  MapPin,
+  Clock,
+  QrCode,
+  Loader2,
+  Camera,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import toast from 'react-hot-toast'
-import type { ChecklistItem, Period } from '@/types'
+import type { ChecklistItem } from '@/types'
 
 export default function ChecklistPage() {
   const navigate            = useNavigate()
@@ -19,18 +26,19 @@ export default function ChecklistPage() {
 
   const today = new Date().toISOString().split('T')[0]
 
-  const [selectedPeriodId, setSelectedPeriodId] = useState<string>('')
   const [openItem,         setOpenItem]         = useState<ChecklistItem | null>(null)
   const [noteVal,          setNoteVal]          = useState('')
-  const [picVal,           setPicVal]           = useState('')
-  const [photoFile,        setPhotoFile]        = useState<File | null>(null)
   const [showNoteModal,    setShowNoteModal]    = useState(false)
-  const [showPhotoModal,   setShowPhotoModal]   = useState(false)
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [issueType, setIssueType] = useState('kotor')
 
-  const { data: periods } = useQuery({
-    queryKey: ['periods'],
-    queryFn:  getPeriods,
+  const { data: activePeriod } = useQuery({
+    queryKey: ['active-period'],
+    queryFn: getActivePeriod,
+    retry: false,
   })
+
+  const selectedPeriodId = activePeriod?.id?.toString() ?? ''
 
   const { data: checklist, isLoading } = useQuery({
     queryKey: ['checklist', activeLocation?.id, selectedPeriodId, today],
@@ -42,6 +50,18 @@ export default function ChecklistPage() {
     enabled: !!activeLocation && !!selectedPeriodId,
   })
 
+  const totalItems = checklist?.items?.length ?? 0
+
+  const doneItems =
+    checklist?.items?.filter(
+      i => i.status === 'done'
+    ).length ?? 0
+
+  const progress =
+    totalItems > 0
+      ? Math.round((doneItems / totalItems) * 100)
+      : 0
+
   const updateMut = useMutation({
     mutationFn: updateChecklist,
     onSuccess:  () => {
@@ -52,18 +72,35 @@ export default function ChecklistPage() {
     onError: () => toast.error('Gagal update'),
   })
 
-  const uploadMut = useMutation({
-    mutationFn: ({ id, file }: { id: number; file: File }) =>
-      uploadChecklistDoc(id, file),
+  const createIssueMut = useMutation({
+    mutationFn: createIssue,
+
     onSuccess: () => {
-      toast.success('Foto berhasil diupload')
+      toast.success('Issue berhasil dikirim')
+
       queryClient.invalidateQueries({
-        queryKey: ['checklist', activeLocation?.id, selectedPeriodId, today],
+        queryKey: ['issues'],
       })
-      setShowPhotoModal(false)
+
+      queryClient.invalidateQueries({
+        queryKey: [
+          'checklist',
+          activeLocation?.id,
+          selectedPeriodId,
+          today,
+        ],
+      })
+
+      setShowNoteModal(false)
+      setOpenItem(null)
+      setNoteVal('')
       setPhotoFile(null)
+      setIssueType('kotor')
     },
-    onError: () => toast.error('Gagal upload foto'),
+
+    onError: () => {
+      toast.error('Gagal mengirim issue')
+    },
   })
 
   const handleToggle = (item: ChecklistItem) => {
@@ -77,33 +114,51 @@ export default function ChecklistPage() {
     })
   }
 
-  const handleSaveNote = () => {
-    if (!openItem || !activeLocation || !selectedPeriodId) return
-    updateMut.mutate(
-      {
-        location_id: activeLocation.id,
-        job_id:      openItem.job_id,
-        periode_id:  Number(selectedPeriodId),
-        date:        today,
-        status:      openItem.status,
-        note:        noteVal,
-        pic:         picVal,
-      },
-      {
-        onSuccess: () => {
-          toast.success('Catatan disimpan')
-          setShowNoteModal(false)
-        },
-      }
-    )
-  }
+  const handleSaveNote = async () => {
+    if (
+      !openItem ||
+      !activeLocation ||
+      !selectedPeriodId
+    ) return
 
-  const handleUploadPhoto = () => {
-    if (!photoFile || !openItem?.checklist_id) {
-      toast.error('Centang item dulu sebelum upload foto')
+    if (!photoFile) {
+      toast.error('Foto wajib diupload')
       return
     }
-    uploadMut.mutate({ id: openItem.checklist_id, file: photoFile })
+
+    if (!noteVal.trim()) {
+      toast.error('Deskripsi issue wajib diisi')
+      return
+    }
+
+    try {
+      const checklistResult = await updateChecklist({
+        location_id: activeLocation.id,
+        job_id: openItem.job_id,
+        periode_id: Number(selectedPeriodId),
+        date: today,
+        status: 'issue',
+        note: noteVal,
+      })
+
+      createIssueMut.mutate({
+        checklist_id: checklistResult.data.id,
+
+        location_id: activeLocation.id,
+
+        date: today,
+
+        type: issueType,
+
+        description: noteVal,
+
+        images: [photoFile],
+      })
+    } catch (err) {
+      console.error(err)
+
+      toast.error('Gagal membuat issue')
+    }
   }
 
   // Tidak ada lokasi
@@ -154,60 +209,76 @@ export default function ChecklistPage() {
             <QrCode className="w-5 h-5" />
           </button>
         </div>
-
-        {/* Progress bar */}
-        {checklist && (
-          <div className="bg-white/20 rounded-2xl p-3 mt-2">
-            <div className="flex justify-between text-white text-xs mb-1.5">
-              <span>{checklist.summary.done}/{checklist.summary.total} selesai</span>
-              <span className="font-bold">{checklist.summary.progress}%</span>
-            </div>
-            <div className="h-2 bg-white/30 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-white rounded-full transition-all"
-                style={{ width: `${checklist.summary.progress}%` }}
-              />
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Period selector */}
       <div className="px-4 py-3">
-        <p className="text-xs font-semibold text-gray-500 uppercase
-                      tracking-wide mb-2">
-          Pilih Shift
-        </p>
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
-          {periods?.map((p: Period) => (
-            <button
-              key={p.id}
-              onClick={() => setSelectedPeriodId(String(p.id))}
-              className={cn(
-                'flex items-center gap-1.5 px-4 py-2 rounded-xl',
-                'text-sm font-medium whitespace-nowrap shrink-0',
-                'border transition-all active:scale-95',
-                selectedPeriodId === String(p.id)
-                  ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
-                  : 'bg-white text-gray-600 border-gray-200'
-              )}
-            >
-              <Clock className="w-3.5 h-3.5" />
-              {p.name}
-              <span className="text-xs opacity-75">
-                {p.time_start.slice(0, 5)}
+        {activePeriod ? (
+          <div className="bg-white rounded-2xl border border-green-200 p-4">
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-green-600" />
+              <span className="text-sm font-semibold text-green-700">
+                Periode Aktif
               </span>
-            </button>
-          ))}
+            </div>
+            <p className="text-base font-bold text-gray-900 mt-1">
+              {activePeriod.name}
+            </p>
+
+            <p className="text-xs text-gray-500">
+              {activePeriod.time_start.slice(0, 5)}
+              {' - '}
+              {activePeriod.time_end.slice(0, 5)}
+            </p>
+          </div>
+        ) : (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
+            <p className="text-sm font-semibold text-red-700">
+              Tidak ada periode aktif
+            </p>
+
+            <p className="text-xs text-red-500 mt-1">
+              Checklist tidak dapat dilakukan saat ini
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div className="px-4 pb-3">
+        <div className="bg-white rounded-2xl p-4 border">
+          <div className="flex justify-between mb-2">
+            <span className="text-sm font-medium">
+              Progress Checklist
+            </span>
+
+            <span className="text-sm font-bold text-brand-600">
+              {progress}%
+            </span>
+          </div>
+
+          <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-brand-600"
+              style={{
+                width: `${progress}%`
+              }}
+            />
+          </div>
+
+          <p className="text-xs text-gray-500 mt-2">
+            {doneItems} dari {totalItems} item selesai
+          </p>
         </div>
       </div>
 
       {/* Checklist items */}
       <div className="px-4 pb-4">
-        {!selectedPeriodId ? (
+        {!activePeriod ? (
           <div className="text-center py-16">
             <Clock className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-            <p className="text-gray-400 text-sm">Pilih shift untuk melihat checklist</p>
+            <p className="text-gray-400 text-sm">
+              Tidak ada periode aktif saat ini
+            </p>
           </div>
         ) : isLoading ? (
           <div className="space-y-3">
@@ -223,10 +294,12 @@ export default function ChecklistPage() {
                 key={item.job_id}
                 className={cn(
                   'bg-white rounded-2xl border transition-all',
+                    'shadow-sm',
+                    'active:scale-[0.99]',
                   'active:scale-[0.99]',
                   item.status === 'done'
                     ? 'border-green-200'
-                    : item.status === 'issue'
+                    :item.has_issue
                     ? 'border-red-200'
                     : 'border-gray-100'
                 )}
@@ -255,52 +328,59 @@ export default function ChecklistPage() {
                         ? 'line-through text-gray-400'
                         : 'text-gray-800 font-medium'
                     )}>
-                      {item.job}
+                      {item.name}
                     </p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      {item.pic && (
-                        <span className="text-xs text-gray-400">
-                          {item.pic}
+                    <div className="flex items-center gap-2 mt-1">
+
+                      {item.status === 'issue' && (
+                        <span
+                          className="
+                            px-2 py-0.5
+                            rounded-full
+                            text-[10px]
+                            font-semibold
+                            bg-red-100
+                            text-red-600
+                          "
+                        >
+                          Issue Dilaporkan
                         </span>
                       )}
-                      {item.documentations.length > 0 && (
-                        <span className="text-xs text-brand-600">
-                          {item.documentations.length} foto
+
+                      {item.status === 'done' && (
+                        <span
+                          className="
+                            px-2 py-0.5
+                            rounded-full
+                            text-[10px]
+                            font-semibold
+                            bg-green-100
+                            text-green-600
+                          "
+                        >
+                          Selesai
                         </span>
                       )}
+
                     </div>
                   </div>
 
                   {/* Action buttons */}
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={() => {
                         setOpenItem(item)
                         setNoteVal(item.note ?? '')
-                        setPicVal(item.pic ?? '')
                         setShowNoteModal(true)
                       }}
-                      className="w-8 h-8 rounded-xl bg-gray-50 flex items-center
-                                 justify-center text-gray-400 active:bg-gray-100"
+                      className={cn(
+                        'w-10 h-10 rounded-xl flex items-center justify-center',
+                        item.has_issue
+                          ? 'bg-red-100 text-red-600'
+                          : 'bg-orange-50 text-orange-500'
+                      )}
                     >
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none"
-                           stroke="currentColor" strokeWidth={2}>
-                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0
-                                 002-2v-7"/>
-                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4
-                                 9.5-9.5z"/>
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setOpenItem(item)
-                        setPhotoFile(null)
-                        setShowPhotoModal(true)
-                      }}
-                      className="w-8 h-8 rounded-xl bg-gray-50 flex items-center
-                                 justify-center text-gray-400 active:bg-gray-100"
-                    >
-                      <Camera className="w-4 h-4" />
+                      <AlertTriangle className="w-5 h-5" />
                     </button>
                   </div>
                 </div>
@@ -310,176 +390,250 @@ export default function ChecklistPage() {
         )}
       </div>
 
-      {/* Modal Note */}
-      {showNoteModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end"
-             onClick={() => setShowNoteModal(false)}>
-          <div className="bg-white w-full rounded-t-3xl p-5 space-y-4
-                          max-w-md mx-auto"
-               onClick={(e) => e.stopPropagation()}>
-            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto" />
-            <h3 className="text-base font-bold text-gray-900">Catatan & PIC</h3>
-            <p className="text-xs text-gray-500 bg-gray-50 rounded-xl p-3
-                          leading-relaxed">
-              {openItem?.job}
-            </p>
-            <div>
-              <label className="text-xs font-semibold text-gray-600 block mb-1.5">
-                Nama PIC
-              </label>
-              <input
-                type="text"
-                placeholder="Nama yang mengerjakan..."
-                value={picVal}
-                onChange={(e) => setPicVal(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200
-                           text-sm bg-gray-50 focus:outline-none
-                           focus:ring-2 focus:ring-brand-500"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-gray-600 block mb-1.5">
-                Catatan
-              </label>
-              <textarea
-                placeholder="Tambahkan catatan..."
-                value={noteVal}
-                onChange={(e) => setNoteVal(e.target.value)}
-                rows={3}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200
-                           text-sm bg-gray-50 focus:outline-none
-                           focus:ring-2 focus:ring-brand-500 resize-none"
-              />
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowNoteModal(false)}
-                className="flex-1 py-3 rounded-2xl border border-gray-200
-                           text-sm font-semibold text-gray-600
-                           active:bg-gray-50"
-              >
-                Batal
-              </button>
-              <button
-                onClick={handleSaveNote}
-                disabled={updateMut.isPending}
-                className="flex-1 py-3 rounded-2xl bg-brand-600 text-white
-                           text-sm font-semibold active:bg-brand-700
-                           flex items-center justify-center gap-2
-                           disabled:opacity-50"
-              >
-                {updateMut.isPending && (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                )}
-                Simpan
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal Photo */}
-      {showPhotoModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end"
-             onClick={() => setShowPhotoModal(false)}>
-          <div className="bg-white w-full rounded-t-3xl p-5 space-y-4
-                          max-w-md mx-auto"
-               onClick={(e) => e.stopPropagation()}>
-            <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto" />
-            <h3 className="text-base font-bold text-gray-900">Upload Foto Bukti</h3>
-            <p className="text-xs text-gray-500 bg-gray-50 rounded-xl p-3">
-              {openItem?.job}
-            </p>
-
-            {!openItem?.checklist_id && (
-              <div className="bg-yellow-50 border border-yellow-200
-                              rounded-xl p-3 text-xs text-yellow-700">
-                Centang item ini dulu sebelum upload foto
+      {/* Modal Issue */}
+        {showNoteModal && (
+          <div
+            className="
+              fixed inset-0
+              bg-black/70
+              backdrop-blur-sm
+              z-50
+              flex items-end
+            "
+            onClick={() => setShowNoteModal(false)}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="
+                bg-white
+                w-full
+                max-w-md
+                mx-auto
+                rounded-t-4xl
+                h-[80vh]
+                flex
+                flex-col
+                overflow-hidden
+                z-50
+              "
+            >
+              {/* Handle */}
+              <div className="py-3">
+                <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto" />
               </div>
-            )}
 
-            {/* Upload area */}
-            <label className="block">
-              <div className={cn(
-                'w-full h-32 rounded-2xl border-2 border-dashed',
-                'flex flex-col items-center justify-center gap-2',
-                'cursor-pointer transition-colors',
-                photoFile
-                  ? 'border-brand-400 bg-brand-50'
-                  : 'border-gray-200 bg-gray-50'
-              )}>
-                {photoFile ? (
-                  <>
-                    <Camera className="w-6 h-6 text-brand-600" />
-                    <p className="text-sm text-brand-700 font-medium">
-                      {photoFile.name}
-                    </p>
-                    <p className="text-xs text-brand-500">
-                      {(photoFile.size / 1024 / 1024).toFixed(2)} MB
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <Camera className="w-6 h-6 text-gray-400" />
-                    <p className="text-sm text-gray-500">Tap untuk pilih foto</p>
-                    <p className="text-xs text-gray-400">Maks 5MB</p>
-                  </>
-                )}
-              </div>
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="hidden"
-                onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
-              />
-            </label>
+              {/* Header */}
+              <div className="px-5 pb-4 border-b">
+                <div className="flex items-start gap-3">
+                  <div
+                    className="
+                      w-12 h-12
+                      rounded-2xl
+                      bg-red-100
+                      flex items-center justify-center
+                    "
+                  >
+                    <AlertTriangle className="w-6 h-6 text-red-600" />
+                  </div>
 
-            {/* Preview foto lama */}
-            {(openItem?.documentations.length ?? 0) > 0 && (
-              <div>
-                <p className="text-xs font-semibold text-gray-500 mb-2">
-                  Foto sebelumnya
-                </p>
-                <div className="flex gap-2 overflow-x-auto">
-                  {openItem?.documentations.map((d) => (
-                    <img
-                      key={d.id}
-                      src={d.image_url}
-                      className="w-16 h-16 rounded-xl object-cover
-                                 border border-gray-200 shrink-0"
-                      alt="doc"
-                    />
-                  ))}
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">
+                      Laporkan Issue
+                    </h3>
+
+                    <p className="text-sm text-gray-500 mt-1">
+                      {openItem?.name}
+                    </p>
+                  </div>
                 </div>
               </div>
-            )}
 
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowPhotoModal(false)}
-                className="flex-1 py-3 rounded-2xl border border-gray-200
-                           text-sm font-semibold text-gray-600"
+              {/* Content */}
+              <div
+                className="
+                  flex-1
+                  overflow-y-auto
+                  px-5
+                  py-5
+                  space-y-5
+                  pb-6
+                "
               >
-                Batal
-              </button>
-              <button
-                onClick={handleUploadPhoto}
-                disabled={!photoFile || uploadMut.isPending}
-                className="flex-1 py-3 rounded-2xl bg-brand-600 text-white
-                           text-sm font-semibold flex items-center
-                           justify-center gap-2 disabled:opacity-50
-                           active:bg-brand-700"
+
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 block mb-2">
+                    Jenis Issue
+                  </label>
+
+                  <select
+                    value={issueType}
+                    onChange={(e) => setIssueType(e.target.value)}
+                    className="
+                      w-full
+                      h-12
+                      px-4
+                      rounded-xl
+                      border
+                      border-gray-200
+                      bg-white
+                    "
+                  >
+                    <option value="kotor">Kotor</option>
+                    <option value="kerusakan">Kerusakan</option>
+                    <option value="material_habis">Material Habis</option>
+                    <option value="lainnya">Lainnya</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 block mb-2">
+                    Deskripsi Issue
+                  </label>
+
+                  <textarea
+                    value={noteVal}
+                    onChange={(e) => setNoteVal(e.target.value)}
+                    rows={5}
+                    placeholder="Contoh: sabun habis, lantai licin, lampu mati..."
+                    className="
+                      w-full
+                      rounded-2xl
+                      border
+                      border-gray-200
+                      p-4
+                      text-sm
+                      resize-none
+                      focus:ring-2
+                      focus:ring-red-500
+                      focus:border-red-500
+                    "
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 block mb-2">
+                    Foto Bukti
+                  </label>
+
+                  <label
+                    className="
+                      border-2
+                      border-dashed
+                      border-gray-200
+                      rounded-2xl
+                      p-8
+                      flex
+                      flex-col
+                      items-center
+                      justify-center
+                      text-center
+                      cursor-pointer
+                      active:bg-gray-50
+                    "
+                  >
+                    <Camera className="w-8 h-8 text-gray-400 mb-3" />
+
+                    <span className="font-semibold text-gray-700">
+                      Ambil Foto
+                    </span>
+
+                    <span className="text-xs text-gray-500 mt-1">
+                      Foto wajib untuk issue
+                    </span>
+
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          setPhotoFile(file)
+                        }
+                      }}
+                    />
+                  </label>
+                  {photoFile && (
+                    <img
+                      src={URL.createObjectURL(photoFile)}
+                      alt=""
+                      className="
+                        mt-3
+                        w-full
+                        h-40
+                        object-cover
+                        rounded-2xl
+                        border
+                      "
+                    />
+                  )}
+                </div>
+
+              </div>
+
+              {/* Footer */}
+              <div
+                className="
+                  border-t
+                  bg-white
+                  p-4
+                  shrink-0
+                  sticky
+                  bottom-0
+                "
               >
-                {uploadMut.isPending && (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                )}
-                Upload
-              </button>
+                <div className="flex gap-3">
+
+                  <button
+                    onClick={() => {
+                      setShowNoteModal(false)
+                      setPhotoFile(null)
+                      setNoteVal('')
+                      setIssueType('kotor')
+                      setOpenItem(null)
+                    }}
+                    className="
+                      flex-1
+                      h-12
+                      rounded-xl
+                      border
+                      border-gray-200
+                      font-semibold
+                      text-gray-600
+                    "
+                  >
+                    Batal
+                  </button>
+
+                  <button
+                    onClick={handleSaveNote}
+                    disabled={createIssueMut.isPending}
+                    className="
+                      flex-1
+                      h-12
+                      rounded-xl
+                      bg-red-600
+                      text-white
+                      font-semibold
+                      flex
+                      items-center
+                      justify-center
+                      gap-2
+                    "
+                  >
+                    {createIssueMut.isPending && (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    )}
+
+                    Kirim Issue
+                  </button>
+
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+)}
     </div>
   )
 }

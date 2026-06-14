@@ -48,13 +48,14 @@ export interface ChecklistDoc {
 
 export interface ChecklistItem {
   job_id: number
-  job: string
-  order: number
+  name: string
   checklist_id: number | null
+
   status: 'pending' | 'done' | 'issue'
+
   note: string | null
-  pic: string | null
-  documentations: ChecklistDoc[]
+
+  has_issue: boolean
 }
 
 export interface ChecklistSummary {
@@ -66,20 +67,9 @@ export interface ChecklistSummary {
 }
 
 export interface ChecklistResponse {
-  date: string
-  location: {
-    id: number
-    name: string
-    type_id: number
-    type_name: string
-  }
-  period: {
-    id: number
-    name: string
-    time_start: string
-    time_end: string
-  }
-  summary: ChecklistSummary
+  location_id: number
+  location: string
+
   items: ChecklistItem[]
 }
 
