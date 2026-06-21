@@ -23,7 +23,7 @@ export default function LoginPage() {
       return <Navigate to="/admin" replace />
     }
 
-    return <Navigate to="/scan" replace />
+    return <Navigate to="/dashboard" replace />
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -40,7 +40,7 @@ export default function LoginPage() {
       if (res.user.role === 'admin') {
         navigate('/admin')
       } else {
-        navigate('/scan')
+        navigate('/dashboard')
       }
 
     } catch (err: unknown) {

@@ -26,6 +26,8 @@ export interface WorkProgram {
   month: number
   year: number
 
+  time_range?: string
+
   scheduled_dates: number[]
 
   job?: {

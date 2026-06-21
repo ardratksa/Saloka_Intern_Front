@@ -70,6 +70,17 @@ interface Props {
   setSubLocation: (
     value: string
   ) => void
+
+  startTime: string
+  endTime: string
+
+  setStartTime: (
+    value: string
+  ) => void
+
+  setEndTime: (
+    value: string
+) => void
 }
 
 export function useScheduleActions({
@@ -101,6 +112,9 @@ export function useScheduleActions({
 
   deleteMutation,
 
+  startTime,
+  endTime,
+
   setOpenModal,
 
   setSelectedJobId,
@@ -110,6 +124,9 @@ export function useScheduleActions({
   setLocation,
 
   setSubLocation,
+
+  setStartTime,
+  setEndTime,
 
 }: Props) {
 
@@ -250,6 +267,8 @@ export function useScheduleActions({
 
       plan: selectedType,
 
+      time_range: `${startTime} - ${endTime}`,
+
       month,
 
       year,
@@ -373,6 +392,9 @@ export function useScheduleActions({
 
             setSubLocation('')
 
+            setStartTime('')
+            setEndTime('')
+
             setOpenModal(
               false
             )
@@ -389,6 +411,9 @@ export function useScheduleActions({
         {
 
           onSuccess: () => {
+
+            setStartTime('')
+            setEndTime('')
 
             setSelectedJobId(
               null

@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/authStore'
-import { getChecklist, updateChecklist } from '@/api/checklist'
+import { getChecklist, updateChecklist, uploadChecklistDoc, } from '@/api/checklist'
 import { getActivePeriod } from '@/api/period'
 import { createIssue } from '@/api/issue'
 import { useNavigate } from 'react-router-dom'
@@ -22,15 +22,20 @@ import type { ChecklistItem } from '@/types'
 export default function ChecklistPage() {
   const navigate            = useNavigate()
   const queryClient         = useQueryClient()
-  const { activeLocation }  = useAuthStore()
+  const { activeLocation, setActiveLocation, }  = useAuthStore()
 
   const today = new Date().toISOString().split('T')[0]
 
   const [openItem,         setOpenItem]         = useState<ChecklistItem | null>(null)
   const [noteVal,          setNoteVal]          = useState('')
   const [showNoteModal,    setShowNoteModal]    = useState(false)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
+  const galleryInputRef = useRef<HTMLInputElement>(null)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [checklistPhotos, setChecklistPhotos] = useState<Record<number, File>>({})
   const [issueType, setIssueType] = useState('kotor')
+  const checklistCameraRef = useRef<HTMLInputElement>(null)
+  const [selectedJobId, setSelectedJobId] = useState<number | null>(null)
 
   const { data: activePeriod } = useQuery({
     queryKey: ['active-period'],
@@ -59,8 +64,18 @@ export default function ChecklistPage() {
 
   const progress =
     totalItems > 0
-      ? Math.round((doneItems / totalItems) * 100)
+      ? Math.round(
+          (doneItems / totalItems) * 100
+        )
       : 0
+
+  const allChecked =
+    totalItems > 0 &&
+    checklist?.items.every(
+      item =>
+        item.status === 'done' ||
+        item.status === 'issue'
+    )
 
   const updateMut = useMutation({
     mutationFn: updateChecklist,
@@ -101,6 +116,38 @@ export default function ChecklistPage() {
     onError: () => {
       toast.error('Gagal mengirim issue')
     },
+  })
+
+  const uploadChecklistDocMut = useMutation({
+
+    mutationFn: ({
+      checklistId,
+      image,
+    }: {
+      checklistId: number
+      image: File
+    }) =>
+      uploadChecklistDoc(
+        checklistId,
+        image
+      ),
+
+    onSuccess: () => {
+
+      toast.success(
+        'Dokumentasi berhasil diupload'
+      )
+
+    },
+
+    onError: () => {
+
+      toast.error(
+        'Upload dokumentasi gagal'
+      )
+
+    },
+
   })
 
   const handleToggle = (item: ChecklistItem) => {
@@ -191,25 +238,69 @@ export default function ChecklistPage() {
 
   return (
     <div className="bg-gray-50 min-h-full">
+
       {/* Header */}
-      <div className="bg-brand-600 pt-12 pb-4 px-4">
-        <div className="flex items-start justify-between mb-3">
-          <div>
-            <h1 className="text-white text-lg font-bold">Checklist</h1>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <MapPin className="w-3.5 h-3.5 text-white/70" />
-              <span className="text-white/90 text-sm">{activeLocation.name}</span>
-            </div>
-          </div>
-          <button
-            onClick={() => navigate('/scan')}
-            className="bg-white/20 text-white p-2 rounded-xl
-                       active:bg-white/30 transition-colors"
+
+        <div className="px-4 pt-4 pb-2">
+
+          <div
+            className="
+              rounded-3xl
+              p-5
+              bg-linear-to-br
+              from-brand-600
+              via-green-600
+              to-emerald-500
+              text-white
+              shadow-xl
+            "
           >
-            <QrCode className="w-5 h-5" />
-          </button>
+
+            <div className="flex items-start justify-between">
+
+              <div>
+
+                <p className="text-sm text-white/80">
+                  Cleaning Checklist
+                </p>
+
+                <h1 className="text-3xl font-bold mt-1">
+                  Checklist
+                </h1>
+
+                <div className="flex items-center gap-2 mt-2">
+
+                  <MapPin className="w-4 h-4 text-white/80" />
+
+                  <span className="text-sm text-white/90">
+                    {activeLocation.name}
+                  </span>
+
+                </div>
+
+              </div>
+
+              <button
+                onClick={() => navigate('/scan')}
+                className="
+                  w-12
+                  h-12
+                  rounded-2xl
+                  bg-white/20
+                  backdrop-blur
+                  flex
+                  items-center
+                  justify-center
+                "
+              >
+                <QrCode className="w-6 h-6 text-white" />
+              </button>
+
+            </div>
+
+          </div>
+
         </div>
-      </div>
 
       {/* Period selector */}
       <div className="px-4 py-3">
@@ -292,14 +383,14 @@ export default function ChecklistPage() {
             {checklist?.items.map((item) => (
               <div
                 key={item.job_id}
+                onClick={() => handleToggle(item)}
                 className={cn(
-                  'bg-white rounded-2xl border transition-all',
-                    'shadow-sm',
-                    'active:scale-[0.99]',
-                  'active:scale-[0.99]',
+                  'bg-white rounded-2xl border transition-all cursor-pointer',
+                  'shadow-sm',
+                  'active:scale-[0.98]',
                   item.status === 'done'
-                    ? 'border-green-200'
-                    :item.has_issue
+                    ? 'border-green-200 bg-green-50'
+                    : item.has_issue
                     ? 'border-red-200'
                     : 'border-gray-100'
                 )}
@@ -367,29 +458,197 @@ export default function ChecklistPage() {
 
                   {/* Action buttons */}
                   <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={() => {
-                        setOpenItem(item)
-                        setNoteVal(item.note ?? '')
-                        setShowNoteModal(true)
-                      }}
-                      className={cn(
-                        'w-10 h-10 rounded-xl flex items-center justify-center',
-                        item.has_issue
-                          ? 'bg-red-100 text-red-600'
-                          : 'bg-orange-50 text-orange-500'
-                      )}
-                    >
-                      <AlertTriangle className="w-5 h-5" />
-                    </button>
-                  </div>
+
+                  {/* Dokumentasi Optional */}
+                  <button
+                    disabled={!item.checklist_id}
+                    onClick={(e) => {
+
+                      e.stopPropagation()
+
+                      setSelectedJobId(item.job_id)
+
+                      checklistCameraRef.current?.click()
+
+                    }}
+                    className={cn(
+                      'w-10 h-10 rounded-xl flex items-center justify-center',
+
+                      !item.checklist_id
+                        ? 'bg-gray-100 text-gray-300'
+
+                        : checklistPhotos[item.job_id]
+                        ? 'bg-green-100 text-green-600'
+
+                        : 'bg-blue-50 text-blue-600'
+                    )}
+                  >
+                    <Camera className="w-5 h-5" />
+                  </button>
+
+                  {/* Issue */}
+                  <button
+                    onClick={(e) => {
+
+                      e.stopPropagation()
+
+                      setOpenItem(item)
+
+                      setNoteVal(item.note ?? '')
+
+                      setShowNoteModal(true)
+
+                    }}
+                    className={cn(
+                      'w-10 h-10 rounded-xl flex items-center justify-center',
+                      item.has_issue
+                        ? 'bg-red-100 text-red-600'
+                        : 'bg-orange-50 text-orange-500'
+                    )}
+                  >
+                    <AlertTriangle className="w-5 h-5" />
+                  </button>
+
+                </div>
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
+        
+        <input
+          ref={checklistCameraRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+         onChange={(e) => {
 
+          const file =
+            e.target.files?.[0]
+
+          if (
+            !file ||
+            !selectedJobId
+          ) return
+
+          const item =
+            checklist?.items.find(
+              i => i.job_id === selectedJobId
+            )
+
+          if (!item?.checklist_id) {
+
+            toast.error(
+              'Checklist harus dicentang dulu'
+            )
+
+            return
+          }
+
+          uploadChecklistDocMut.mutate({
+
+            checklistId:
+              item.checklist_id,
+
+            image: file,
+
+          })
+
+          setChecklistPhotos(
+            prev => ({
+              ...prev,
+              [selectedJobId]: file,
+            })
+          )
+
+        }}
+        />
+
+        {allChecked && (
+
+          <div
+            className="
+              mx-4
+              mb-6
+              mt-2
+              p-5
+              rounded-3xl
+              bg-green-50
+              border
+              border-green-200
+              text-center
+            "
+          >
+
+            <div
+              className="
+                w-14
+                h-14
+                rounded-full
+                bg-green-100
+                flex
+                items-center
+                justify-center
+                mx-auto
+                mb-3
+              "
+            >
+              <CheckCircle2
+                className="
+                  w-8
+                  h-8
+                  text-green-600
+                "
+              />
+            </div>
+
+            <h3
+              className="
+                text-lg
+                font-bold
+                text-green-700
+              "
+            >
+              Checklist Selesai
+            </h3>
+
+            <p
+              className="
+                text-sm
+                text-green-600
+                mt-2
+                mb-4
+              "
+            >
+              Semua pekerjaan pada lokasi ini
+              telah diperiksa.
+            </p>
+
+            <button
+              onClick={() => {
+
+                setActiveLocation(null)
+
+                navigate('/scan')
+
+              }}
+              className="
+                w-full
+                h-12
+                rounded-2xl
+                bg-green-600
+                text-white
+                font-semibold
+              "
+            >
+              Scan Lokasi Berikutnya
+            </button>
+
+          </div>
+
+        )}
       {/* Modal Issue */}
         {showNoteModal && (
           <div
@@ -511,63 +770,101 @@ export default function ChecklistPage() {
                 </div>
 
                 <div>
+
                   <label className="text-sm font-semibold text-gray-700 block mb-2">
                     Foto Bukti
                   </label>
 
-                  <label
-                    className="
-                      border-2
-                      border-dashed
-                      border-gray-200
-                      rounded-2xl
-                      p-8
-                      flex
-                      flex-col
-                      items-center
-                      justify-center
-                      text-center
-                      cursor-pointer
-                      active:bg-gray-50
-                    "
-                  >
-                    <Camera className="w-8 h-8 text-gray-400 mb-3" />
+                  <div className="grid grid-cols-2 gap-2">
 
-                    <span className="font-semibold text-gray-700">
-                      Ambil Foto
-                    </span>
-
-                    <span className="text-xs text-gray-500 mt-1">
-                      Foto wajib untuk issue
-                    </span>
-
-                    <input
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      className="hidden"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0]
-                        if (file) {
-                          setPhotoFile(file)
-                        }
-                      }}
-                    />
-                  </label>
-                  {photoFile && (
-                    <img
-                      src={URL.createObjectURL(photoFile)}
-                      alt=""
+                    <button
+                      type="button"
+                      onClick={() =>
+                        cameraInputRef.current?.click()
+                      }
                       className="
-                        mt-3
-                        w-full
-                        h-40
-                        object-cover
-                        rounded-2xl
+                        h-12
+                        rounded-xl
                         border
+                        border-gray-200
+                        font-medium
                       "
-                    />
+                    >
+                      📷 Kamera
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        galleryInputRef.current?.click()
+                      }
+                      className="
+                        h-12
+                        rounded-xl
+                        border
+                        border-gray-200
+                        font-medium
+                      "
+                    >
+                      🖼 Galeri
+                    </button>
+
+                  </div>
+
+                  <input
+                    ref={cameraInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+
+                      if (file) {
+                        setPhotoFile(file)
+                      }
+                    }}
+                  />
+
+                  <input
+                    ref={galleryInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+
+                      if (file) {
+                        setPhotoFile(file)
+                      }
+                    }}
+                  />
+
+                  {photoFile && (
+
+                    <div className="mt-3">
+
+                      <p className="text-sm text-gray-500 mb-2">
+                        Preview Foto
+                      </p>
+
+                      <img
+                        src={URL.createObjectURL(photoFile)}
+                        alt="preview"
+                        className="
+                          w-full
+                          max-h-60
+                          object-contain
+                          rounded-2xl
+                          border
+                          bg-gray-50
+                        "
+                      />
+
+                    </div>
+
                   )}
+
                 </div>
 
               </div>

@@ -16,6 +16,7 @@ interface DataTableProps<T> {
   searchPlaceholder?: string
   onSearch?: (q: string) => void
   actions?: (row: T) => React.ReactNode
+  headerLeft?: React.ReactNode
   headerRight?: React.ReactNode
   title?: string
   subtitle?: string
@@ -30,6 +31,7 @@ export function DataTable<T extends { id: number }>({
   searchPlaceholder = 'Cari...',
   onSearch,
   actions,
+  headerLeft,
   headerRight,
   title,
   subtitle,
@@ -85,7 +87,21 @@ export function DataTable<T extends { id: number }>({
           </div>
 
           {/* Search + Action */}
-          <div className="flex items-center justify-end mt-6 gap-4">
+          <div
+            className="
+              flex
+              items-center
+              justify-start
+              mt-6
+              gap-4
+            "
+          >
+
+            {headerLeft && (
+              <div>
+                {headerLeft}
+              </div>
+            )}
 
             {/* Search */}
             <div className="relative w-80">

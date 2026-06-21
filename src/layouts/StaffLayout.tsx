@@ -2,22 +2,48 @@ import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { logout } from '@/api/auth'
 import {
+  LayoutDashboard,
   ClipboardCheck,
   AlertTriangle,
-  Camera,
   Wrench,
-  User,
+  UserCircle,
+  KeyRound,
   LogOut,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import toast from 'react-hot-toast'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 const NAV = [
-  { to: '/checklist', label: 'Checklist', icon: ClipboardCheck },
-  { to: '/issues', label: 'Issues', icon: AlertTriangle },
-  { to: '/sc-report', label: 'SC Report', icon: Camera },
-  { to: '/work-plan', label: 'Work Plan', icon: Wrench },
-  { to: '/profile', label: 'Profil', icon: User },
+  {
+    to: '/dashboard',
+    label: 'Dashboard',
+    icon: LayoutDashboard,
+  },
+
+  {
+    to: '/checklist',
+    label: 'Checklist',
+    icon: ClipboardCheck,
+  },
+
+  {
+    to: '/issues',
+    label: 'Issues',
+    icon: AlertTriangle,
+  },
+
+  {
+    to: '/work-plan',
+    label: 'Work Plan',
+    icon: Wrench,
+  },
 ]
 
 export default function StaffLayout() {
@@ -47,33 +73,90 @@ export default function StaffLayout() {
                    flex items-center justify-between shrink-0"
       >
         <div className="flex items-center gap-3">
-          <div
-            className="w-11 h-11 rounded-2xl bg-brand-600
-                       flex items-center justify-center shadow-sm"
-          >
-            <ClipboardCheck className="w-5 h-5 text-white" />
-          </div>
-
-          <div>
-            <h1 className="text-sm font-semibold text-gray-900">
-              Saloka CS
-            </h1>
-
-            <p className="text-xs text-gray-500">
-              {user?.name ?? 'Cleaning Service'}
-            </p>
-          </div>
+    
         </div>
 
-        <button
-          onClick={handleLogout}
-          className="w-10 h-10 rounded-xl border border-gray-200
-                     flex items-center justify-center
-                     hover:bg-red-50 hover:border-red-100
-                     transition-all"
+        <DropdownMenu>
+
+        <DropdownMenuTrigger asChild>
+          <button
+            className="
+              w-12
+              h-12
+              rounded-2xl
+              bg-white
+              border
+              border-gray-200
+              shadow-sm
+              flex
+              items-center
+              justify-center
+            "
+          >
+            <UserCircle className="w-6 h-6 text-gray-600" />
+          </button>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent
+          align="end"
+          className="
+            w-56
+            rounded-3xl
+            bg-white
+            border
+            border-gray-200
+            shadow-2xl
+            p-2
+            z-50
+          "
         >
-          <LogOut className="w-4 h-4 text-red-500" />
-        </button>
+
+          {/* HEADER PROFILE */}
+          <div className="px-3 py-2">
+            <p className="font-semibold text-gray-900">
+              {user?.name}
+            </p>
+
+            <p className="text-xs text-gray-500">
+              Cleaning Service
+            </p>
+          </div>
+
+          <DropdownMenuSeparator />
+
+          {/* MENU */}
+          <DropdownMenuItem
+            className="rounded-xl cursor-pointer"
+          >
+            <UserCircle className="w-4 h-4 mr-2" />
+            Profil
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            className="rounded-xl cursor-pointer"
+          >
+            <KeyRound className="w-4 h-4 mr-2" />
+            Ganti Password
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
+          <DropdownMenuItem
+            onClick={handleLogout}
+            className="
+              rounded-xl
+              cursor-pointer
+              text-red-600
+              focus:text-red-600
+            "
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Logout
+          </DropdownMenuItem>
+
+        </DropdownMenuContent>
+
+      </DropdownMenu>
       </header>
 
       {/* Content */}

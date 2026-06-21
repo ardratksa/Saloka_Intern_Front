@@ -1,168 +1,61 @@
 import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient, } from '@tanstack/react-query'
-import { getIssues, updateIssueStatus, } from '@/api/issue'
-import toast from 'react-hot-toast'
+import { useQuery} from '@tanstack/react-query'
+import {getWeeklyReport} from '@/api/weeklyReport'
 import { DataTable } from '@/components/admin/DataTable'
-import { AlertTriangle, Download } from 'lucide-react'
+import { exportReport } from '@/api/reportExport'
+import DatePicker from 'react-datepicker'
+import 'react-datepicker/dist/react-datepicker.css'
+import {
+  AlertTriangle,
+  Download,
+  CalendarRange,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { Issue } from '@/types'
-
-function getMonday(d = new Date()) {
-  const day  = d.getDay()
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1)
-  return new Date(d.setDate(diff)).toISOString().split('T')[0]
-}
-
-const DAY_LABELS = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min']
 
 export default function AdminReport() {
   const [showIssueModal, setShowIssueModal] = useState(false)
 
   const [selectedIssue, setSelectedIssue] = useState<any>(null)
 
-  const [selectedStatus, setSelectedStatus] = useState('')
+  const [
+    startDate,
+    setStartDate,
+  ] = useState<Date | null>(
+    new Date(
+      new Date().getFullYear(),
+      new Date().getMonth(),
+      1
+    )
+  )
 
-  const [weekStart, setWeekStart] = useState(getMonday())
+  const [
+    endDate,
+    setEndDate,
+  ] = useState<Date | null>(
+    new Date()
+  )
 
-  const queryClient = useQueryClient()
+  const {
+  data: report,
+  isLoading,
+} = useQuery({
+  enabled: !!startDate && !!endDate,
 
-  const { data: issues = [] } = useQuery<Issue[]>({
-    queryKey: ['issues'],
-    queryFn: () => getIssues({}),
-  })
+  queryKey: [
+    'report',
+    startDate,
+    endDate,
+  ],
 
-  const updateStatusMut = useMutation({
-    mutationFn: ({
-      id,
-      status,
-    }: {
-      id: number
-      status: 'open' | 'in_progress' | 'resolved'
-    }) => updateIssueStatus(id, status),
+  queryFn: () =>
+    getWeeklyReport(
+      startDate!.toISOString().split('T')[0],
+      endDate!.toISOString().split('T')[0]
+    ),
 
-    onSuccess: () => {
-      toast.success('Status berhasil diperbarui')
-
-      queryClient.invalidateQueries({
-        queryKey: ['issues'],
-      })
-
-      setShowIssueModal(false)
-    },
-
-    onError: () => {
-      toast.error('Gagal update status')
-    },
-  })
-
-  const dummyData = {
-
-    week_end: '2026-06-07',
-
-    summary: {
-      total: 128,
-      done: 102,
-      pct: 80,
-      issues: 8,
-    },
-
-    daily_progress: {
-
-      sen:{ done:18,total:20,pct:90 },
-      sel:{ done:17,total:20,pct:85 },
-      rab:{ done:15,total:20,pct:75 },
-      kam:{ done:20,total:20,pct:100 },
-      jum:{ done:18,total:20,pct:90 },
-      sab:{ done:12,total:20,pct:60 },
-      min:{ done:10,total:20,pct:50 },
-
-    },
-
-    period_progress: [
-
-      {
-        period_id: 1,
-        period_name: 'Pagi 1',
-        time_start: '09:00',
-        done: 18,
-        total: 20,
-        pct: 90,
-      },
-
-      {
-        period_id: 2,
-        period_name: 'Pagi 2',
-        time_start: '11:00',
-        done: 16,
-        total: 20,
-        pct: 80,
-      },
-
-      {
-        period_id: 3,
-        period_name: 'Siang',
-        time_start: '14:00',
-        done: 14,
-        total: 20,
-        pct: 70,
-      },
-
-      {
-        period_id: 4,
-        period_name: 'Sore',
-        time_start: '17:00',
-        done: 20,
-        total: 20,
-        pct: 100,
-      },
-    ],
-
-    location_progress: [
-
-      {
-        location_id: 1,
-        location_name: 'Toilet Kamayayi',
-        type: 'Toilet',
-        done: 18,
-        total: 20,
-        pct: 90,
-        issue: 0,
-      },
-
-      {
-        location_id: 2,
-        location_name: 'Toilet Down Town',
-        type: 'Toilet',
-        done: 15,
-        total: 20,
-        pct: 75,
-        issue: 2,
-      },
-
-      {
-        location_id: 3,
-        location_name: 'Toilet Joglo',
-        type: 'Toilet',
-        done: 20,
-        total: 20,
-        pct: 100,
-        issue: 0,
-      },
-    ],
-
-  }
-
-  const data = dummyData
-  const isLoading = false
-
-  const reportData =
-  dummyData
-
-  const changeWeek = (dir: number) => {
-    const d = new Date(weekStart)
-    d.setDate(d.getDate() + dir * 7)
-    setWeekStart(d.toISOString().split('T')[0])
-  }
+  placeholderData: (prev) => prev,
+})
+      
 
   const issueColumns = [
     { key: 'type', label: 'Jenis Issue' },
@@ -179,14 +72,10 @@ export default function AdminReport() {
             'text-xs px-2 py-0.5 rounded-full font-medium',
             i.status === 'resolved'
               ? 'bg-green-100 text-green-700'
-              : i.status === 'in_progress'
-              ? 'bg-yellow-100 text-yellow-700'
               : 'bg-red-100 text-red-700'
           )}        >
           {i.status === 'resolved'
             ? 'Resolved'
-            : i.status === 'in_progress'
-            ? 'In Progress'
             : 'Open'}
         </span>
       ),
@@ -199,7 +88,6 @@ export default function AdminReport() {
         <button
           onClick={() => {
             setSelectedIssue(i)
-            setSelectedStatus(i.status)
             setShowIssueModal(true)
           }}
           className="
@@ -217,54 +105,96 @@ export default function AdminReport() {
     },
   ]
 
-  const locColumns = [
-    { key: 'location_name', label: 'Lokasi' },
-    { key: 'type',          label: 'Tipe'   },
-    {
-      key: 'progress',
-      label: 'Progress',
-      render: (l: { done: number; total: number; pct: number }) => (
-        <div className="flex items-center gap-2">
-          <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-brand-600 rounded-full"
-              style={{ width: `${l.pct}%` }}
-            />
-          </div>
-          <span className="text-xs text-gray-600">
-            {l.done}/{l.total} ({l.pct}%)
-          </span>
-        </div>
-      ),
-    },
-    {
-      key: 'issue',
-      label: 'Issues',
-      render: (l: { issue: number }) =>
-        l.issue > 0 ? (
-          <span className="text-xs text-red-600 font-medium">
-            {l.issue} issue
-          </span>
-        ) : (
-          <span className="text-xs text-gray-400">—</span>
-        ),
-    },
-  ]
+  const checklistColumns = [
 
-  return (
+  {
+    key: 'date',
+    label: 'Tanggal',
+  },
+
+  {
+    key: 'location',
+    label: 'Lokasi',
+  },
+
+  {
+    key: 'location_type',
+    label: 'Tipe',
+  },
+
+  {
+    key: 'period',
+    label: 'Periode',
+  },
+
+  {
+    key: 'pic',
+    label: 'PIC',
+  },
+
+  {
+    key: 'status',
+    label: 'Status',
+  },
+
+]
+
+const handleExport = async () => {
+
+  if (!startDate || !endDate)
+    return
+
+  const blob =
+    await exportReport(
+      startDate
+        .toISOString()
+        .split('T')[0],
+
+      endDate
+        .toISOString()
+        .split('T')[0]
+    )
+
+  const url =
+    window.URL.createObjectURL(
+      new Blob([blob])
+    )
+
+  const link =
+    document.createElement('a')
+
+  link.href = url
+
+  link.download =
+    'cleaning-report.xlsx'
+
+  document.body.appendChild(
+    link
+  )
+
+  link.click()
+
+  link.remove()
+
+  window.URL.revokeObjectURL(
+    url
+  )
+}
+
+return (
     <div className="p-6 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-semibold text-gray-900">
-            Laporan Mingguan
+            Laporan Checklist
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            Rekap checklist, progress, dan issues per minggu
+            Rekap checklist dan issue berdasarkan rentang tanggal
           </p>
         </div>
         <button
-          onClick={() => window.print()}
+          onClick={handleExport}
           className="flex items-center gap-2 px-3 py-2 rounded-lg border
                      border-gray-200 text-sm text-gray-600 hover:bg-gray-50
                      transition-colors"
@@ -274,29 +204,7 @@ export default function AdminReport() {
         </button>
       </div>
 
-      {/* Week navigator */}
-      <div className="flex items-center gap-3 bg-white rounded-xl
-                      border border-gray-200 p-3">
-        <button
-          onClick={() => changeWeek(-1)}
-          className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm
-                     text-gray-600 hover:bg-gray-50 transition-colors"
-        >
-          ← Minggu lalu
-        </button>
-        <div className="flex-1 text-center">
-          <p className="text-sm font-medium text-gray-900">
-            {weekStart} — {data.week_end}
-          </p>
-        </div>
-        <button
-          onClick={() => changeWeek(1)}
-          className="px-3 py-1.5 rounded-lg border border-gray-200 text-sm
-                     text-gray-600 hover:bg-gray-50 transition-colors"
-        >
-          Minggu depan →
-        </button>
-      </div>
+      
 
       {isLoading ? (
         <div className="space-y-3">
@@ -305,32 +213,32 @@ export default function AdminReport() {
                  className="h-24 bg-gray-100 rounded-xl animate-pulse" />
           ))}
         </div>
-      ) : data ? (
+      ) : report? (
         <>
           {/* Summary cards */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             {[
               {
                 label: 'Total Tugas',
-                value: data.summary.total,
+                value: report?.summary.total,
                 color: 'text-gray-900',
                 bg:    'bg-gray-50',
               },
               {
                 label: 'Selesai',
-                value: data.summary.done,
+                value: report?.summary.done,
                 color: 'text-brand-600',
                 bg:    'bg-brand-50',
               },
               {
                 label: 'Progress',
-                value: `${data.summary.pct}%`,
+                value: `${report?.summary.pct}%`,
                 color: 'text-blue-600',
                 bg:    'bg-blue-50',
               },
               {
                 label: 'Issues',
-                value: data.summary.issues,
+                value: report?.summary.issues,
                 color: 'text-red-500',
                 bg:    'bg-red-50',
               },
@@ -351,92 +259,113 @@ export default function AdminReport() {
             ))}
           </div>
 
-          {/* Daily chart */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4">
-              Progress per Hari
-            </h3>
-            <div className="grid grid-cols-7 gap-3">
-              {Object.entries(data.daily_progress).map(
-                ([date, dp], i) => (
-                  <div key={date} className="text-center">
-                    <p className="text-xs text-gray-400 mb-1">
-                      {DAY_LABELS[i]}
-                    </p>
-                    <div className="h-20 bg-gray-100 rounded-lg relative
-                                    overflow-hidden">
-                      <div
-                        className={cn(
-                          'absolute bottom-0 left-0 right-0 rounded-lg',
-                          'transition-all',
-                          dp.pct === 100
-                            ? 'bg-brand-600'
-                            : dp.pct > 0
-                            ? 'bg-brand-400'
-                            : 'bg-gray-200'
-                        )}
-                        style={{ height: `${dp.pct}%` }}
-                      />
-                    </div>
-                    <p className="text-xs font-medium text-gray-700 mt-1">
-                      {dp.pct}%
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {dp.done}/{dp.total}
-                    </p>
-                  </div>
-                )
-              )}
-            </div>
-          </div>
+          <div
+            className="
+              bg-white
+              rounded-xl
+              border
+              border-gray-200
+              overflow-hidden
+            "
+          >
 
-          {/* Period progress */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4">
-              Progress per Periode
-            </h3>
-            <div className="space-y-3">
-              {data.period_progress.map((p) => (
-                <div key={p.period_id}
-                     className="flex items-center gap-3">
-                  <div className="w-24 shrink-0">
-                    <p className="text-xs font-medium text-gray-700">
-                      {p.period_name}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {p.time_start.slice(0, 5)}
-                    </p>
-                  </div>
-                  <div className="flex-1 h-3 bg-gray-100 rounded-full
-                                  overflow-hidden">
-                    <div
-                      className="h-full bg-brand-600 rounded-full transition-all"
-                      style={{ width: `${p.pct}%` }}
-                    />
-                  </div>
-                  <span className="text-xs text-gray-500 w-32 text-right shrink-0">
-                    {p.done}/{p.total} ({p.pct}%)
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Location progress table */}
-          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <DataTable
-              title="Status per Lokasi"
-              data={data.location_progress.map((l) => ({
-                ...l,
-                id: l.location_id,
-              }))}
-              columns={locColumns}
-              searchPlaceholder="Cari lokasi..."
+
+              title="Checklist"
+
+              headerLeft={
+
+              <div className="relative">
+
+                <CalendarRange
+                  className="
+                    pointer-events-none
+                    absolute
+                    left-4
+                    top-1/2
+                    z-10
+                    h-5
+                    w-5
+                    -translate-y-1/2
+                    text-gray-400
+                  "
+                />
+
+                <DatePicker
+
+                  selectsRange
+
+                  startDate={startDate}
+
+                  endDate={endDate}
+
+                  onChange={(dates) => {
+
+                    const [start, end] = dates
+
+                    if (!start && !end) {
+
+                      setStartDate(
+                        new Date(
+                          new Date().getFullYear(),
+                          new Date().getMonth(),
+                          1
+                        )
+                      )
+
+                      setEndDate(
+                        new Date()
+                      )
+
+                      return
+                    }
+
+                    setStartDate(start)
+                    setEndDate(end)
+
+                  }}
+
+                  placeholderText="Pilih Rentang Tanggal"
+
+                  dateFormat="dd MMM yyyy"
+
+                  className="
+                    h-12
+                    w-[340px]
+                    rounded-2xl
+                    border
+                    border-gray-200
+                    bg-white
+                    pl-12
+                    pr-4
+                    text-sm
+                    font-medium
+                    outline-none
+                  "
+
+                />
+
+              </div>
+
+            }
+
+              data={
+                report?.checklists.map(
+                  (c) => ({
+                    ...c,
+                    id: c.id,
+                  })
+                ) || []
+              }
+
+              columns={checklistColumns}
+
             />
+
           </div>
 
           {/* Issues table */}
-          {issues.length > 0 && (
+          {report?.issues?.length > 0 && (
             <div
               className="
                 bg-white
@@ -447,11 +376,15 @@ export default function AdminReport() {
               "
             >
               <DataTable
-                title="Issues Minggu Ini"
-                data={issues.map((i) => ({
-                  ...i,
-                  id: i.id,
-                }))}
+                title="Daftar Issue"
+                data={
+                  report?.issues.map(
+                    (i) => ({
+                      ...i,
+                      id: i.id,
+                    })
+                  ) || []
+                }
                 columns={issueColumns}
                 searchPlaceholder="Cari issue..."
                 headerRight={
@@ -459,7 +392,7 @@ export default function AdminReport() {
                     <AlertTriangle className="w-4 h-4 text-red-500" />
 
                     <span className="text-sm text-red-600 font-medium">
-                      {issues.length} issue
+                     {report?.issues?.length || 0} issue
                     </span>
                   </div>
                 }
@@ -509,38 +442,64 @@ export default function AdminReport() {
               </div>
             </div>
 
+            {selectedIssue.photos?.length > 0 && (
+
+            <div
+              className="
+                mt-5
+                grid
+                grid-cols-2
+                gap-3
+              "
+            >
+
+              {selectedIssue.photos.map(
+                (photo: any) => (
+
+                  <img
+
+                    key={photo.id}
+
+                    src={photo.image_url}
+
+                    alt="Issue"
+
+                    className="
+                      h-40
+                      w-full
+                      object-cover
+                      rounded-xl
+                      cursor-pointer
+                    "
+
+                    onClick={() =>
+                      window.open(
+                        photo.image_url,
+                        '_blank'
+                      )
+                    }
+
+                  />
+
+                )
+              )}
+
+            </div>
+
+          )}
+
             <div className="mt-5">
               <label className="text-sm font-medium">
                 Status
               </label>
 
-              <select
-                className="
-                  mt-2
-                  w-full
-                  border
-                  rounded-lg
-                  h-11
-                  px-3
-                "
-                value={selectedStatus}
-                onChange={(e) =>
-                  setSelectedStatus(e.target.value)
-                }
-              >
-                <option value="open">
-                  Open
-                </option>
-
-                <option value="in_progress">
-                  In Progress
-                </option>
-
-                <option value="resolved">
-                  Resolved
-                </option>
-              </select>
             </div>
+
+            <div className="mt-4">
+                <b>Status:</b>
+                {' '}
+                {selectedIssue.status}
+              </div>
 
             <div className="flex gap-3 mt-6">
               <button
@@ -554,33 +513,10 @@ export default function AdminReport() {
               >
                 Tutup
               </button>
-
-              <button
-                onClick={() =>
-                  updateStatusMut.mutate({
-                    id: selectedIssue.id,
-                    status: selectedStatus as
-                      | 'open'
-                      | 'in_progress'
-                      | 'resolved',
-                  })
-                }
-                disabled={updateStatusMut.isPending}
-                className="
-                  flex-1
-                  h-11
-                  bg-green-600
-                  text-white
-                  rounded-lg
-                "
-              >
-                {updateStatusMut.isPending
-                  ? 'Menyimpan...'
-                  : 'Simpan'}
-              </button>
             </div>
           </div>
         </div>
+        
       )}
     </div>
   )

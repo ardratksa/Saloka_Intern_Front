@@ -12,12 +12,14 @@ import MasterPeriode from '@/pages/admin/master/MasterPeriode'
 import MasterTipe from '@/pages/admin/master/MasterTipe'
 import MasterLokasi from '@/pages/admin/master/MasterLokasi'
 import MasterJobPage from '@/pages/admin/master/MasterJob'
+import MasterIssue from '@/pages/admin/master/MasterIssue'
 import AdminReport from '@/pages/admin/report/AdminReport'
 import ProgramKerjaPage from '@/pages/admin/program-kerja/ProgramKerja'
 import OutPlanPage from '@/pages/admin/program-kerja/OutPlan'
 
 // Staff
 import StaffLayout from '@/layouts/StaffLayout'
+import DashboardPage from '@/pages/staff/DashboardPage'
 import ChecklistPage from '@/pages/staff/ChecklistPage'
 import IssuePage from '@/pages/staff/IssuePage'
 import ScReportPage from '@/pages/staff/ScReportPage'
@@ -105,6 +107,11 @@ export default function App() {
           />
 
           <Route
+            path="master/issue"
+            element={<MasterIssue />}
+          />
+
+          <Route
             path="program-kerja"
             element={<ProgramKerjaPage />}
           />
@@ -131,7 +138,12 @@ export default function App() {
         >
           <Route
             index
-            element={<Navigate to="/checklist" replace />}
+            element={<Navigate to="/dashboard" replace />}
+          />
+
+          <Route
+            path="dashboard"
+            element={<DashboardPage />}
           />
 
           <Route

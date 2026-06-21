@@ -90,6 +90,12 @@ export default function OutPlanPage() {
     selectedType,
     setSelectedType,
 
+    startTime,
+    setStartTime,
+
+    endTime,
+    setEndTime,
+
   } = useScheduleModal()
 
   const [
@@ -246,6 +252,9 @@ export default function OutPlanPage() {
     location,
     subLocation,
 
+    startTime,
+    endTime,
+
     createMutation,
 
     updateMutation,
@@ -261,6 +270,9 @@ export default function OutPlanPage() {
     setLocation,
 
     setSubLocation,
+
+    setStartTime,
+    setEndTime,
 
   })
 
@@ -321,6 +333,9 @@ export default function OutPlanPage() {
             setSelectedDates([])
 
             setEditingItem(null)
+
+            setStartTime('')
+            setEndTime('')
 
             setOpenTypeModal(
               true
@@ -418,6 +433,18 @@ export default function OutPlanPage() {
             item.sub_location
           )
 
+          const times =
+            (item.time_range || '')
+              .split('-')
+
+          setStartTime(
+            times[0]?.trim() || ''
+          )
+
+          setEndTime(
+            times[1]?.trim() || ''
+          )
+
           setSelectedDates(
 
             item.scheduled_dates.map(
@@ -489,6 +516,12 @@ export default function OutPlanPage() {
         setSelectedDates={
           setSelectedDates
         }
+
+        startTime={startTime}
+        endTime={endTime}
+
+        setStartTime={setStartTime}
+        setEndTime={setEndTime}
 
       />
 

@@ -1,20 +1,21 @@
 import api from '@/lib/axios'
-import type { WeeklyReport } from '@/types'
 
-export const getWeeklyReport = async (
+export const exportReport = async (
   startDate: string,
   endDate: string
 ) => {
 
   const res = await api.get(
-    '/weekly-report',
+    '/report/export',
     {
       params: {
         start_date: startDate,
         end_date: endDate,
       },
+
+      responseType: 'blob',
     }
   )
 
-  return res.data as WeeklyReport
+  return res.data
 }

@@ -38,8 +38,33 @@ export const createIssue = async (data: {
 
 export const updateIssueStatus = async (
   id: number,
-  status: 'open' | 'in_progress' | 'resolved'
+  status: 'open' | 'resolved'
 ) => {
   const res = await api.patch(`/issues/${id}/status`, { status })
+  return res.data
+}
+
+export const closeIssue = async (
+  id: number,
+  note: string,
+  image: File
+) => {
+
+  const form = new FormData()
+
+  form.append('note', note)
+  form.append('image', image)
+
+  const res = await api.post(
+    `/issues/${id}/close`,
+    form,
+    {
+      headers: {
+        'Content-Type':
+          'multipart/form-data',
+      },
+    }
+  )
+
   return res.data
 }

@@ -126,6 +126,10 @@ export default function CleaningTable({
               </th>
 
               <th className="px-7 py-4 text-center">
+                Waktu
+              </th>
+
+              <th className="px-7 py-4 text-center">
                 Jenis
               </th>
 
@@ -148,7 +152,7 @@ export default function CleaningTable({
               <tr>
 
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="
                     py-24
                     text-center
@@ -168,7 +172,7 @@ export default function CleaningTable({
               <tr>
 
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="
                     py-24
                     text-center
@@ -244,6 +248,27 @@ export default function CleaningTable({
                     </div>
 
                   </td>
+
+                  {/* WAKTU */}
+
+                    <td
+                      className="
+                        px-7 py-5
+                        text-center
+                      "
+                    >
+
+                      <span
+                        className="
+                          text-sm
+                          font-medium
+                          text-gray-700
+                        "
+                      >
+                        {item.time_range || '-'}
+                      </span>
+
+                    </td>
 
                   {/* JENIS */}
 

@@ -95,6 +95,16 @@ export function useScheduleModal() {
     setSubLocation,
   ] = useState('')
 
+  const [
+    startTime,
+    setStartTime,
+  ] = useState('')
+
+  const [
+    endTime,
+    setEndTime,
+  ] = useState('')
+
   return {
 
     openModal,
@@ -120,5 +130,12 @@ export function useScheduleModal() {
 
     subLocation,
     setSubLocation,
+
+
+    startTime,
+    setStartTime,
+
+    endTime,
+    setEndTime,
   }
 }

@@ -29,7 +29,7 @@ export interface WorkProgram {
 
   scheduled_dates: number[]
 
-  status: 'pending' | 'done'
+  status: 'pending' | 'done' | 'late'
 
   checker?: string
 
@@ -44,20 +44,15 @@ export async function getWorkPrograms(params?: {
   month?: number
   year?: number
 }) {
-
   const response = await api.get(
     '/work-programs',
-    {
-      params,
-    }
+    { params }
   )
 
-  console.log(
-    'WORK PROGRAMS',
-    response.data
-  )
-
-  return response.data || []
+  return {
+    success: response.data.success,
+    data: response.data.data ?? [],
+  }
 }
 
 export async function createWorkProgram(payload: any) {
@@ -116,4 +111,40 @@ export async function getLocations(
   )
 
   return response.data?.data?.data || []
+}
+
+  export const uploadEvidence = async (
+  id: number,
+  beforeImage: File,
+  afterImage: File,
+  remark?: string
+) => {
+  const form = new FormData()
+
+  form.append(
+    'before_image',
+    beforeImage
+  )
+
+  form.append(
+    'after_image',
+    afterImage
+  )
+
+  if (remark) {
+    form.append('remark', remark)
+  }
+
+  const res = await api.post(
+    `/work-programs/${id}/evidence`,
+    form,
+    {
+      headers: {
+        'Content-Type':
+          'multipart/form-data',
+      },
+    }
+  )
+
+  return res.data
 }

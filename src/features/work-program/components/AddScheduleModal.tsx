@@ -51,6 +51,17 @@ interface Props {
   setSelectedDates: (
     dates: Date[]
   ) => void
+
+  startTime: string
+  endTime: string
+
+  setStartTime: (
+    value: string
+  ) => void
+
+  setEndTime: (
+    value: string
+  ) => void
 }
 
 const selectStyles = {
@@ -123,7 +134,6 @@ const selectStyles = {
 export default function AddScheduleModal({
 
   openModal,
-
   setOpenModal,
 
   selectedJobId,
@@ -149,6 +159,12 @@ export default function AddScheduleModal({
   selectedDates,
 
   setSelectedDates,
+
+  startTime,
+  endTime,
+
+  setStartTime,
+  setEndTime,
 
 }: Props) {
 
@@ -535,6 +551,7 @@ export default function AddScheduleModal({
             >
               Sub Lokasi
             </label>
+            
 
             <div className="relative">
 
@@ -575,6 +592,60 @@ export default function AddScheduleModal({
 
                 }
 
+              />
+
+            </div>
+
+          </div>
+
+           {/* WAKTU PEKERJAAN */}
+
+          <div className="space-y-2">
+
+            <label
+              className="
+                text-sm
+                font-medium
+                text-gray-700
+              "
+            >
+              Waktu Pekerjaan
+            </label>
+
+            <div className="grid grid-cols-2 gap-3">
+
+              <input
+                type="time"
+                value={startTime}
+                onChange={(e) =>
+                  setStartTime(
+                    e.target.value
+                  )
+                }
+                className="
+                  h-14
+                  rounded-2xl
+                  border
+                  border-gray-200
+                  px-4
+                "
+              />
+
+              <input
+                type="time"
+                value={endTime}
+                onChange={(e) =>
+                  setEndTime(
+                    e.target.value
+                  )
+                }
+                className="
+                  h-14
+                  rounded-2xl
+                  border
+                  border-gray-200
+                  px-4
+                "
               />
 
             </div>

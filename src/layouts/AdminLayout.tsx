@@ -29,10 +29,35 @@ const NAV = [
     label: 'Data Master',
     icon: Tag,
     children: [
-      { label: 'Periode', icon: Clock,      to: '/admin/master/periode' },
-      { label: 'Tipe Area',    icon: Tag,         to: '/admin/master/tipe'    },
-      { label: 'Lokasi',  icon: MapPin,      to: '/admin/master/lokasi'  },
-      { label: 'Pekerjaan',     icon: Briefcase,   to: '/admin/master/job'     },
+      {
+        label: 'Periode',
+        icon: Clock,
+        to: '/admin/master/periode',
+      },
+
+      {
+        label: 'Tipe Area',
+        icon: Tag,
+        to: '/admin/master/tipe',
+      },
+
+      {
+        label: 'Lokasi',
+        icon: MapPin,
+        to: '/admin/master/lokasi',
+      },
+
+      {
+        label: 'Pekerjaan',
+        icon: Briefcase,
+        to: '/admin/master/job',
+      },
+
+      {
+        label: 'Master Issue',
+        icon: Tag,
+        to: '/admin/master/issue',
+      },
     ],
   },
   {

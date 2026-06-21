@@ -88,7 +88,7 @@ export interface Issue {
   location: string
   reported_by: string
   date: string
-  status: 'open' | 'in_progress' | 'resolved'
+  status: 'open' | 'resolved'
   wa_sent: boolean
   created_at: string
   photos: IssueDoc[]
@@ -125,38 +125,99 @@ export interface WorkPlan {
   created_at: string
 }
 
+export interface WorkProgramEvidence {
+  id: number
+
+  before_image?: string
+  after_image?: string
+
+  before_remark?: string
+  after_remark?: string
+
+  date: string
+}
+
+export interface WorkProgram {
+  id: number
+
+  location_type_id: number
+
+  area_name?: string
+  location_name?: string
+  sub_location?: string
+
+  job_id: number
+
+  category: 'plan' | 'out_plan'
+
+  plan: 'weekly' | 'monthly'
+
+  time_range?: string
+
+  month: number
+
+  year: number
+
+  scheduled_dates: number[]
+
+  status:
+    | 'pending'
+    | 'overdue'
+    | 'done'
+
+  completed_at?: string
+
+  has_evidence: boolean
+
+  job?: {
+    id: number
+    job: string
+  }
+
+  evidences?: WorkProgramEvidence[]
+}
+
 export interface WeeklyReport {
-  week_start: string
-  week_end: string
+
+  start_date: string
+
+  end_date: string
+
   summary: {
+
     total: number
+
     done: number
+
     pct: number
+
     issues: number
   }
-  daily_progress: Record<string, {
-    total: number
-    done: number
-    pct: number
+
+  checklists: Array<{
+
+    id: number
+
+    date: string
+
+    location: string
+
+    location_type: string
+
+    period: string
+
+    pic: string
+
+    status:
+      | 'pending'
+      | 'done'
+      | 'issue'
+
+    note: string | null
+
+    total_docs: number
   }>
-  period_progress: Array<{
-    period_id: number
-    period_name: string
-    time_start: string
-    time_end: string
-    total: number
-    done: number
-    pct: number
-  }>
-  location_progress: Array<{
-    location_id: number
-    location_name: string
-    type: string
-    total: number
-    done: number
-    issue: number
-    pct: number
-  }>
+
   issues: Issue[]
 }
 
@@ -167,3 +228,8 @@ export interface ActiveLocation {
   type_name: string
 }
 
+export interface MasterIssue {
+  id: number
+  name: string
+  is_active: boolean
+}

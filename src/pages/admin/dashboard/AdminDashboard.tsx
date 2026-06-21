@@ -1,9 +1,12 @@
+import ExcelJS from 'exceljs'
+import { saveAs } from 'file-saver'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getDailySummary } from '@/api/checklist'
 import { getIssues } from '@/api/issue'
 import { getLocations } from '@/api/location'
 import { getPeriods } from '@/api/period'
+import { getLocationTypes } from '@/api/location'
 import {
   ClipboardCheck,
   AlertTriangle,
@@ -40,29 +43,40 @@ type Session = {
   done: number
   issue: number
   score: number
-  status: 'OK' | 'Perlu Perbaikan' | 'Tidak OK'
+  status: 'OK' | 'Tidak Ok'
 }
 
-type Summary = {
-  total: number
-  ok: number
-  perbaikan: number
-  tidak_ok: number
-  avg_score: number
+const imageUrlToBase64 = async (url: string) => {
+  const response = await fetch(url)
+  const blob = await response.blob()
+
+  return new Promise<string>((resolve) => {
+    const reader = new FileReader()
+
+    reader.onloadend = () => {
+      resolve(reader.result as string)
+    }
+
+    reader.readAsDataURL(blob)
+  })
 }
+
 
 export default function AdminDashboard() {
   const today = new Date().toISOString().split('T')[0]
 
   const [dateFrom, setDateFrom] = useState(today)
   const [filterLoc, setFilterLoc] = useState('all')
+  const [filterType, setFilterType] = useState('all')
   const [openLocation, setOpenLocation] = useState(false)
   const [filterShift, setFilterShift] = useState('all')
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [detail, setDetail] = useState<Session | null>(null)
   const { data: issues = [] } = useQuery({
   queryKey: ['dashboard-issues'],
   queryFn: () => getIssues(),
 })
+console.log(issues)
 
   const { data, isLoading } = useQuery<{
     summary: {
@@ -80,9 +94,19 @@ export default function AdminDashboard() {
   })
 
   const { data: masterLocations = [] } = useQuery({
-    queryKey: ['master-locations'],
-    queryFn: () => getLocations(),
+    queryKey: ['master-locations', filterType],
+    queryFn: () =>
+      filterType === 'all'
+        ? getLocations()
+        : getLocations(Number(filterType)),
   })
+
+  const { data: masterTypes = [] } = useQuery({
+    queryKey: ['location-types'],
+    queryFn: getLocationTypes,
+  })
+
+  const locations = masterLocations
 
   const { data: periods = [] } = useQuery({
     queryKey: ['periods'],
@@ -98,25 +122,37 @@ export default function AdminDashboard() {
   }
 
   const sessions =
-    (data?.sessions ?? []).filter((s: Session) => {
-      if (
-        filterLoc !== 'all' &&
-        s.location !== filterLoc
-      ) {
-        return false
-      }
+    (data?.sessions ?? [])
+      .filter((s: Session) => {
+        const hasIssue =
+          issues.some(
+            (i: any) =>
+              i.location === s.location &&
+              i.date === s.date
+          )
 
-      if (
-        filterShift !== 'all' &&
-        s.shift !== filterShift
-      ) {
-        return false
-      }
+        if (!hasIssue) {
+          return false
+        }
 
-      return true
-    })
+        if (
+          filterLoc !== 'all' &&
+          s.location !== filterLoc
+        ) {
+          return false
+        }
 
-  const locations = masterLocations
+        if (
+          filterShift !== 'all' &&
+          s.shift !== filterShift
+        ) {
+          return false
+        }
+
+        return true
+      })
+
+  
 
   const shiftTimes = periods
 
@@ -125,8 +161,8 @@ export default function AdminDashboard() {
       return 'text-green-600 bg-green-50 border-green-200'
     }
 
-    if (status === 'Perlu Perbaikan') {
-      return 'text-yellow-600 bg-yellow-50 border-yellow-200'
+    if (status === 'Tidak OK') {
+      return 'text-red-600 bg-red-50 border-red-200'
     }
 
     return 'text-red-600 bg-red-50 border-red-200'
@@ -136,6 +172,158 @@ export default function AdminDashboard() {
     if (score >= 80) return 'text-green-600'
     if (score >= 60) return 'text-yellow-600'
     return 'text-red-600'
+  }
+
+  const exportExcel = async () => {
+
+    const workbook = new ExcelJS.Workbook()
+
+    const sheet =
+      workbook.addWorksheet(
+        'MASTER OUTPUT'
+      )
+
+    sheet.mergeCells('A1:I1')
+
+    sheet.getCell('A1').value =
+      'MASTER OUTPUT'
+
+    sheet.getCell('A1').font = {
+      bold: true,
+      size: 16,
+    }
+
+    sheet.addRow([])
+
+    sheet.addRow([
+      'NO',
+      'TANGGAL',
+      'TIME',
+      'LOKASI',
+      'Y',
+      'N',
+      'ISSUE',
+      'REMARK',
+      'DOKUMENTASI',
+    ])
+
+    const filteredIssues = issues.filter((issue: any) => {
+
+    if (
+      filterLoc !== 'all' &&
+      issue.location !== filterLoc
+    ) {
+      return false
+    }
+
+    if (
+      dateFrom &&
+      issue.date !== dateFrom
+    ) {
+      return false
+    }
+
+    return true
+  })
+
+    let rowIndex = 4
+
+    for (
+      let i = 0;
+      i < filteredIssues.length;
+      i++
+    ) {
+
+      const issue =
+        filteredIssues[i]
+
+      const time =
+        issue.created_at?.split(' ')[1] ?? ''
+
+      const row =
+        sheet.addRow([
+          i + 1,
+          issue.date,
+          time,
+          issue.location,
+          issue.status === 'resolved'
+            ? 'Y'
+            : '',
+          issue.status === 'open'
+            ? 'N'
+            : '',
+          issue.type,
+          issue.description,
+          '',
+        ])
+
+      sheet.getRow(
+        row.number
+      ).height = 100
+
+      if (
+        issue.photos?.length
+      ) {
+
+        try {
+
+          const base64 =
+            await imageUrlToBase64(
+              issue.photos[0].image_url
+            )
+
+          const imageId =
+            workbook.addImage({
+              base64,
+              extension: 'jpeg',
+            })
+
+          sheet.addImage(
+            imageId,
+            {
+              tl: {
+                col: 8,
+                row: rowIndex - 1,
+              },
+
+              ext: {
+                width: 120,
+                height: 90,
+              },
+            }
+          )
+
+        } catch (err) {
+
+          console.error(
+            'Gagal load image',
+            err
+          )
+        }
+      }
+
+      rowIndex++
+    }
+
+    sheet.columns = [
+      { width: 8 },
+      { width: 18 },
+      { width: 12 },
+      { width: 25 },
+      { width: 8 },
+      { width: 8 },
+      { width: 25 },
+      { width: 40 },
+      { width: 25 },
+    ]
+
+    const buffer =
+      await workbook.xlsx.writeBuffer()
+
+    saveAs(
+      new Blob([buffer]),
+      `Issue_Report_${dateFrom}.xlsx`
+    )
   }
 
   const sessionIssues = detail
@@ -178,6 +366,42 @@ export default function AdminDashboard() {
             px-4
           "
         />
+
+        <select
+          value={filterType}
+          onChange={(e) => {
+            setFilterType(e.target.value)
+            setFilterLoc('all')
+          }}
+          className="
+            h-12
+            w-52
+            rounded-xl
+            border
+            border-gray-200
+            px-4
+            bg-white
+          "
+        >
+          <option value="all">
+            Semua Tipe
+          </option>
+
+          {masterTypes
+            .filter(
+              (t: any) =>
+                t.name === 'Toilet' ||
+                t.name === 'Laktasi'
+            )
+            .map((t: any) => (
+              <option
+                key={t.id}
+                value={t.id}
+              >
+                {t.name}
+              </option>
+          ))}
+        </select>
 
         <Popover
           open={openLocation}
@@ -243,7 +467,7 @@ export default function AdminDashboard() {
                     Semua Lokasi
                   </CommandItem>
 
-                  {masterLocations.map((loc) => (
+                  {locations.map((loc: any) => (
                     <CommandItem
                       key={loc.id}
                       onSelect={() => {
@@ -291,7 +515,7 @@ export default function AdminDashboard() {
         </select>
 
         <button
-          onClick={() => window.print()}
+          onClick={exportExcel}
           className="
             ml-auto
             h-12
@@ -310,7 +534,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* SUMMARY */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
 
         {/* TOTAL */}
         <div className="bg-white border border-gray-200 rounded-2xl p-4 flex items-center gap-3">
@@ -340,20 +564,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* PERBAIKAN */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-4 flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-yellow-50 flex items-center justify-center">
-            <AlertTriangle className="w-6 h-6 text-yellow-600" />
-          </div>
-
-          <div>
-            <p className="text-xs text-gray-500">Perlu Perbaikan</p>
-            <p className="text-2xl font-bold text-yellow-600">
-              {summary.perbaikan}
-            </p>
-          </div>
-        </div>
-
         {/* TIDAK OK */}
         <div className="bg-white border border-gray-200 rounded-2xl p-4 flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center">
@@ -361,7 +571,7 @@ export default function AdminDashboard() {
           </div>
 
           <div>
-            <p className="text-xs text-gray-500">Tidak OK</p>
+            <p className="text-xs text-gray-500">Perlu Perbaikan</p>
             <p className="text-2xl font-bold text-red-600">
               {summary.tidak_ok}
             </p>
@@ -616,11 +826,17 @@ export default function AdminDashboard() {
                             key={p.id}
                             src={p.image_url}
                             alt=""
+                            onClick={() =>
+                              setPreviewImage(p.image_url)
+                            }
                             className="
                               h-28
                               w-full
                               object-cover
                               rounded-lg
+                              cursor-pointer
+                              hover:opacity-80
+                              transition
                             "
                           />
                         ))}
@@ -631,6 +847,33 @@ export default function AdminDashboard() {
               </div>
             )}
           </div>
+        </div>
+      )}
+      {previewImage && (
+        <div
+          className="
+            fixed
+            inset-0
+            bg-black/90
+            z-9999
+            flex
+            items-center
+            justify-center
+            p-6
+          "
+          onClick={() =>
+            setPreviewImage(null)
+          }
+        >
+          <img
+            src={previewImage}
+            alt=""
+            className="
+              max-w-full
+              max-h-full
+              rounded-xl
+            "
+          />
         </div>
       )}
     </div>

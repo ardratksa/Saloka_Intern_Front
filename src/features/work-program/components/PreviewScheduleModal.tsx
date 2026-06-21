@@ -247,6 +247,47 @@ export default function PreviewScheduleModal({
                         Sub Lokasi
                       </p>
 
+                      <div
+                        className="
+                          flex
+                          items-center
+                          gap-2
+                        "
+                      >
+
+                        <CalendarDays
+                          className="
+                            h-4
+                            w-4
+                            text-brand-500
+                          "
+                        />
+
+                        <div>
+
+                          <p
+                            className="
+                              text-[10px]
+                              uppercase
+                              text-slate-500
+                            "
+                          >
+                            Waktu
+                          </p>
+
+                          <p
+                            className="
+                              text-sm
+                              font-medium
+                            "
+                          >
+                            {item.time_range || '-'}
+                          </p>
+
+                        </div>
+
+                      </div>
+
                       <p
                         className="
                           text-sm

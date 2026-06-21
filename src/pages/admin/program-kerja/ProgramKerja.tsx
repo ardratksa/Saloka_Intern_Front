@@ -90,6 +90,11 @@ export default function ProgramKerjaPage() {
     selectedType,
     setSelectedType,
 
+    startTime,
+    setStartTime,
+
+    endTime,
+    setEndTime,
   } = useScheduleModal()
 
   const [
@@ -246,6 +251,9 @@ export default function ProgramKerjaPage() {
     location,
     subLocation,
 
+    startTime,
+    endTime,
+
     createMutation,
 
     updateMutation,
@@ -261,6 +269,9 @@ export default function ProgramKerjaPage() {
     setLocation,
 
     setSubLocation,
+
+    setStartTime,
+    setEndTime,
 
   })
 
@@ -418,6 +429,18 @@ export default function ProgramKerjaPage() {
             item.sub_location
           )
 
+          const times =
+            (item.time_range || '')
+              .split('-')
+
+          setStartTime(
+            times[0]?.trim() || ''
+          )
+
+          setEndTime(
+            times[1]?.trim() || ''
+          )
+
           setSelectedDates(
 
             item.scheduled_dates.map(
@@ -489,6 +512,12 @@ export default function ProgramKerjaPage() {
         setSelectedDates={
           setSelectedDates
         }
+
+        startTime={startTime}
+        endTime={endTime}
+
+        setStartTime={setStartTime}
+        setEndTime={setEndTime}
 
       />
 
