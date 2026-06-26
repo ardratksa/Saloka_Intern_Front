@@ -1,51 +1,142 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuthStore } from '@/store/authStore'
+import { useEffect, useRef, useState } from 'react'
 import { getLocations, getLocationTypes } from '@/api/location'
 import { useQuery } from '@tanstack/react-query'
-import {
-  QrCode, MapPin, ChevronLeft,
-} from 'lucide-react'
-import toast from 'react-hot-toast'
-import type { ActiveLocation, LocationType, Location } from '@/types'
+import type { Location, LocationType, ActiveLocation } from '@/types'
 import { cn } from '@/lib/utils'
+import { MapPin } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Html5Qrcode } from 'html5-qrcode'
+import { scanQr } from '@/api/auth'
+import { useAuthStore } from '@/store/authStore'
+import toast from 'react-hot-toast'
+
+import {
+  ChevronLeft,
+  Camera,
+} from 'lucide-react'
 
 export default function QrScanPage() {
   const navigate = useNavigate()
-  const { setActiveLocation, activeLocation, token } = useAuthStore()
+  const { setActiveLocation, activeLocation } = useAuthStore()
+  const [selectedTypeId, setSelectedTypeId] = useState('')
+  const [selectedLocId, setSelectedLocId] = useState('')
+  const [showManual, setShowManual] = useState(false)
 
-  const [selectedTypeId, setSelectedTypeId] = useState<string>('')
-  const [selectedLocId,  setSelectedLocId]  = useState<string>('')
+  const scannerRef = useRef<Html5Qrcode | null>(null)
+  const scanningRef = useRef(false)
 
-  const { data: types } = useQuery({
+  const { data: types = [] } = useQuery({
     queryKey: ['location-types'],
-    queryFn:  getLocationTypes,
-    enabled:  !!token,
+    queryFn: getLocationTypes,
   })
 
-  const { data: locations } = useQuery({
-    queryKey: ['locations', selectedTypeId],
-    queryFn:  () => getLocations(Number(selectedTypeId)),
-    enabled:  !!selectedTypeId,
-  })
-
-  const selectedLoc = locations?.find(
-    (l) => String(l.id) === selectedLocId
+  const filteredTypes = types.filter(
+    (type: LocationType) =>
+      type.name === "Toilet" ||
+      type.name === "Laktasi"
   )
 
-  const handleConfirm = () => {
-    if (!selectedLocId || !selectedLoc) {
+  const { data: locations = [] } = useQuery({
+    queryKey: ['locations', selectedTypeId],
+    queryFn: () => getLocations(Number(selectedTypeId)),
+    enabled: !!selectedTypeId,
+  })
+
+  useEffect(() => {
+
+  scannerRef.current = new Html5Qrcode("reader")
+  const scanner = scannerRef.current
+
+    scanner
+    .start(
+      {
+        facingMode: "environment",
+      },
+      {
+        fps: 10,
+        qrbox: {
+          width: 250,
+          height: 250,
+        },
+      },
+      async (decodedText) => {
+
+        if (scanningRef.current) return
+
+        scanningRef.current = true
+
+        try {
+
+          const res = await scanQr(decodedText)
+
+          await scanner.stop()
+          await scanner.clear()
+
+          setActiveLocation(res.location)
+
+          toast.success("Lokasi berhasil ditemukan")
+
+          navigate("/checklist")
+
+        } catch (err) {
+
+          console.error(err)
+
+          toast.error("QR tidak valid")
+
+          scanningRef.current = false
+
+        }
+
+      },
+      () => {}
+    )
+    .catch((err) => {
+
+        console.error(err)
+
+        toast.error("Kamera tidak tersedia")
+
+        setShowManual(true)
+
+    })
+
+    return () => {
+
+        if (scannerRef.current?.isScanning) {
+
+            scannerRef.current
+                .stop()
+                .then(() => scannerRef.current?.clear())
+                .catch(() => {})
+
+        }
+
+    }
+  }, [navigate, setActiveLocation])
+
+  const handleManual = () => {
+
+    const loc = locations.find(
+      (l: Location) => String(l.id) === selectedLocId
+    )
+
+    if (!loc) {
       toast.error('Pilih lokasi terlebih dahulu')
       return
     }
+
     const active: ActiveLocation = {
-      id:        selectedLoc.id,
-      name:      selectedLoc.name,
-      type_id:   selectedLoc.type_id,
-      type_name: selectedLoc.type_name,
+      id: loc.id,
+      name: loc.name,
+      type_id: loc.type_id,
+      type_name: loc.type_name,
     }
+
     setActiveLocation(active)
-    toast.success(`Lokasi: ${selectedLoc.name}`)
+
+    toast.success('Lokasi dipilih')
+
     navigate('/checklist')
   }
 
@@ -64,147 +155,164 @@ export default function QrScanPage() {
             </button>
           )}
           <div>
-            <h1 className="text-white text-xl font-bold">Pilih Lokasi</h1>
+            <h1 className="text-white text-xl font-bold">Scan QR</h1>
             <p className="text-white/70 text-xs mt-0.5">
-              Scan QR atau pilih lokasi manual
+              Arahkan kamera ke QR lokasi
             </p>
           </div>
         </div>
 
-        {/* QR ilustrasi */}
-        <div className="bg-white/10 rounded-2xl p-4 flex items-center gap-4">
-          <div className="w-14 h-14 bg-white/20 rounded-xl flex items-center
-                          justify-center shrink-0">
-            <QrCode className="w-8 h-8 text-white" />
-          </div>
-          <div>
-            <p className="text-white text-sm font-semibold">Scan QR Code</p>
-            <p className="text-white/70 text-xs mt-0.5">
-              Arahkan kamera ke QR di pintu lokasi
-            </p>
-            <p className="text-white/50 text-xs mt-1">
-              (Fitur scan akan hadir segera)
-            </p>
-          </div>
-        </div>
+        
       </div>
+      <div className="flex-1 px-5 py-6">
 
-      {/* Form pilih manual */}
-      <div className="flex-1 px-5 py-6 space-y-4">
-        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-          Atau pilih manual
-        </p>
+          <div
+              className="
+              bg-white
+              rounded-3xl
+              border
+              border-gray-200
+              shadow-sm
+              overflow-hidden
+              "
+          >
 
-        {/* Pilih tipe */}
-        <div>
-          <label className="text-sm font-semibold text-gray-700 block mb-2">
-            Tipe Lokasi
-          </label>
-          <div className="grid grid-cols-2 gap-2">
-            {types?.map((t: LocationType) => (
-              <button
-                key={t.id}
-                onClick={() => {
-                  setSelectedTypeId(String(t.id))
-                  setSelectedLocId('')
-                }}
-                className={cn(
-                  'py-3 px-4 rounded-2xl text-sm font-semibold border',
-                  'transition-all active:scale-95',
-                  selectedTypeId === String(t.id)
-                    ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
-                    : 'bg-white text-gray-700 border-gray-200'
-                )}
-              >
-                {t.name}
-              </button>
-            ))}
+              <div
+                  id="reader"
+                  className="w-full min-h-[320px]"
+              ></div>
+
           </div>
-        </div>
 
-        {/* Pilih lokasi */}
-        {selectedTypeId && (
-          <div>
-            <label className="text-sm font-semibold text-gray-700 block mb-2">
-              Pilih Lokasi
-            </label>
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {locations?.map((l: Location) => (
+          <div className="mt-6 text-center">
+
+              <Camera className="w-8 h-8 mx-auto text-brand-600 mb-2"/>
+
+              <h2 className="font-bold text-lg">
+                  Scan QR Lokasi
+              </h2>
+
+              <p className="text-sm text-gray-500 mt-2">
+
+                  Arahkan kamera ke QR Code
+                  yang berada di lokasi checklist.
+
+              </p>
+
+              <div className="mt-8">
+
                 <button
-                  key={l.id}
-                  onClick={() => setSelectedLocId(String(l.id))}
-                  className={cn(
-                    'w-full flex items-center gap-3 px-4 py-3',
-                    'rounded-2xl border transition-all active:scale-[0.99]',
-                    selectedLocId === String(l.id)
-                      ? 'bg-brand-50 border-brand-400 text-brand-700'
-                      : 'bg-white border-gray-100 text-gray-700'
-                  )}
+                    onClick={() => setShowManual(true)}
+                    className="
+                        w-full
+                        border
+                        border-brand-300
+                        text-brand-700
+                        rounded-2xl
+                        py-3
+                        font-semibold
+                        hover:bg-brand-50
+                    "
                 >
-                  <div className={cn(
-                    'w-8 h-8 rounded-xl flex items-center justify-center shrink-0',
-                    selectedLocId === String(l.id)
-                      ? 'bg-brand-100'
-                      : 'bg-gray-100'
-                  )}>
-                    <MapPin className={cn(
-                      'w-4 h-4',
-                      selectedLocId === String(l.id)
-                        ? 'text-brand-600'
-                        : 'text-gray-500'
-                    )} />
-                  </div>
-                  <span className="text-sm font-medium text-left flex-1">
-                    {l.name}
-                  </span>
-                  {selectedLocId === String(l.id) && (
-                    <div className="w-5 h-5 rounded-full bg-brand-600
-                                    flex items-center justify-center shrink-0">
-                      <svg className="w-3 h-3 text-white" viewBox="0 0 24 24"
-                           fill="none" stroke="currentColor" strokeWidth={3}>
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    </div>
-                  )}
+                    Pilih Lokasi Manual
                 </button>
-              ))}
+
+                {showManual && (
+
+                  <div className="mt-6 space-y-4">
+
+                      <div>
+
+                          <p className="text-sm font-semibold mb-2">
+                              Tipe Lokasi
+                          </p>
+
+                          <div className="grid grid-cols-2 gap-2">
+
+                              {filteredTypes.map((t: LocationType) => (
+
+                                  <button
+                                      key={t.id}
+                                      onClick={()=>{
+                                          setSelectedTypeId(String(t.id))
+                                          setSelectedLocId('')
+                                      }}
+                                      className={cn(
+                                          "rounded-xl border py-3",
+                                          selectedTypeId===String(t.id)
+                                              ? "bg-brand-600 text-white"
+                                              : "bg-white"
+                                      )}
+                                  >
+                                      {t.name}
+                                  </button>
+
+                              ))}
+
+                          </div>
+
+                      </div>
+
+                      {!!selectedTypeId && (
+
+                          <div>
+
+                              <p className="text-sm font-semibold mb-2">
+                                  Lokasi
+                              </p>
+
+                              <div className="space-y-2 max-h-52 overflow-auto">
+
+                                  {locations.map((loc: Location)=>(
+
+                                      <button
+                                          key={loc.id}
+                                          onClick={()=>setSelectedLocId(String(loc.id))}
+                                          className={cn(
+                                              "w-full rounded-xl border px-4 py-3 text-left flex items-center gap-3",
+                                              selectedLocId===String(loc.id)
+                                                  ? "border-brand-600 bg-brand-50"
+                                                  : "bg-white"
+                                          )}
+                                      >
+                                          <MapPin className="w-4 h-4"/>
+
+                                          {loc.name}
+
+                                      </button>
+
+                                  ))}
+
+                              </div>
+
+                          </div>
+
+                      )}
+
+                      <button
+                          onClick={handleManual}
+                          disabled={!selectedLocId}
+                          className="
+                              w-full
+                              bg-brand-600
+                              text-white
+                              rounded-2xl
+                              py-4
+                              font-bold
+                              disabled:opacity-40
+                          "
+                      >
+                          Masuk Checklist
+                      </button>
+
+                  </div>
+
+                  )}
+
             </div>
-          </div>
-        )}
 
-        {/* Lokasi aktif sebelumnya */}
-        {activeLocation && (
-          <div className="bg-brand-50 border border-brand-200 rounded-2xl p-4">
-            <p className="text-xs text-brand-600 font-semibold mb-1">
-              Lokasi aktif sebelumnya
-            </p>
-            <p className="text-sm font-bold text-brand-700">
-              {activeLocation.name}
-            </p>
-            <p className="text-xs text-brand-500">{activeLocation.type_name}</p>
-            <button
-              onClick={() => navigate('/checklist')}
-              className="mt-2 text-xs text-brand-600 font-semibold underline"
-            >
-              Lanjutkan dengan lokasi ini →
-            </button>
           </div>
-        )}
-      </div>
 
-      {/* Bottom confirm button */}
-      <div className="px-5 pb-8 pt-3 bg-white border-t border-gray-100">
-        <button
-          onClick={handleConfirm}
-          disabled={!selectedLocId}
-          className="w-full bg-brand-600 text-white py-4 rounded-2xl
-                     text-sm font-bold flex items-center justify-center gap-2
-                     disabled:opacity-40 disabled:cursor-not-allowed
-                     active:bg-brand-700 transition-colors"
-        >
-          <MapPin className="w-4 h-4" />
-          Konfirmasi Lokasi
-        </button>
       </div>
     </div>
   )

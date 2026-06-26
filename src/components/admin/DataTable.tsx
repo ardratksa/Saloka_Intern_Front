@@ -91,40 +91,58 @@ export function DataTable<T extends { id: number }>({
             className="
               flex
               items-center
-              justify-start
+              justify-between
               mt-6
               gap-4
             "
           >
 
-            {headerLeft && (
+            {/* kiri */}
               <div>
                 {headerLeft}
               </div>
-            )}
 
-            {/* Search */}
-            <div className="relative w-80">
-              <Search
-                className="absolute left-3 top-1/2 -translate-y-1/2
-                           w-5 h-5 text-gray-400"
-              />
+              {/* kanan */}
+              <div className="flex items-center gap-3">
 
-              <input
-                type="text"
-                placeholder={searchPlaceholder}
-                value={search}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="w-full h-12 pl-11 pr-4 rounded-2xl
-                           border border-gray-200 bg-white
-                           text-base
-                           focus:outline-none focus:ring-2
-                           focus:ring-brand-500"
-              />
-            </div>
+                <div className="relative w-80">
 
-            {/* Button */}
-            {headerRight}
+                  <Search
+                    className="
+                      absolute
+                      left-3
+                      top-1/2
+                      -translate-y-1/2
+                      w-5
+                      h-5
+                      text-gray-400
+                    "
+                  />
+
+                  <input
+                    type="text"
+                    placeholder={searchPlaceholder}
+                    value={search}
+                    onChange={(e) =>
+                      handleSearch(e.target.value)
+                    }
+                    className="
+                      w-full
+                      h-12
+                      pl-11
+                      pr-4
+                      rounded-2xl
+                      border
+                      border-gray-200
+                      bg-white
+                    "
+                  />
+
+                </div>
+
+                {headerRight}
+
+              </div>
           </div>
 
           {/* Rows Pagination */}

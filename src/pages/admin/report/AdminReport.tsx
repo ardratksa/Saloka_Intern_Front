@@ -6,16 +6,20 @@ import { exportReport } from '@/api/reportExport'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import {
-  AlertTriangle,
   Download,
   CalendarRange,
+   SlidersHorizontal,
 } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 
 export default function AdminReport() {
-  const [showIssueModal, setShowIssueModal] = useState(false)
-
-  const [selectedIssue, setSelectedIssue] = useState<any>(null)
 
   const [
     startDate,
@@ -35,11 +39,31 @@ export default function AdminReport() {
     new Date()
   )
 
+  const [selectedLocation, setSelectedLocation] =
+  useState('all')
+
+  const [selectedType, setSelectedType] =
+    useState('all')
+
+  const [selectedPeriod, setSelectedPeriod] =
+    useState('all')
+
+  const [selectedPic, setSelectedPic] =
+    useState('all')
+
+  const [selectedStatus, setSelectedStatus] =
+    useState('all')
+  
+  const [
+    openFilter,
+    setOpenFilter,
+  ] = useState(false)
+
   const {
-  data: report,
-  isLoading,
-} = useQuery({
-  enabled: !!startDate && !!endDate,
+    data: report,
+    isLoading,
+  } = useQuery({
+    enabled: !!startDate && !!endDate,
 
   queryKey: [
     'report',
@@ -56,54 +80,6 @@ export default function AdminReport() {
   placeholderData: (prev) => prev,
 })
       
-
-  const issueColumns = [
-    { key: 'type', label: 'Jenis Issue' },
-    { key: 'location', label: 'Lokasi' },
-    { key: 'reported_by', label: 'Dilaporkan' },
-    { key: 'date', label: 'Tanggal' },
-
-    {
-      key: 'status',
-      label: 'Status',
-      render: (i: any) => (
-        <span
-          className={cn(
-            'text-xs px-2 py-0.5 rounded-full font-medium',
-            i.status === 'resolved'
-              ? 'bg-green-100 text-green-700'
-              : 'bg-red-100 text-red-700'
-          )}        >
-          {i.status === 'resolved'
-            ? 'Resolved'
-            : 'Open'}
-        </span>
-      ),
-    },
-
-    {
-      key: 'action',
-      label: 'Aksi',
-      render: (i: any) => (
-        <button
-          onClick={() => {
-            setSelectedIssue(i)
-            setShowIssueModal(true)
-          }}
-          className="
-            px-3 py-1
-            rounded-lg
-            bg-brand-600
-            text-white
-            text-xs
-            font-medium
-          "
-        >
-          Detail
-        </button>
-      ),
-    },
-  ]
 
   const checklistColumns = [
 
@@ -138,6 +114,39 @@ export default function AdminReport() {
   },
 
 ]
+
+const filteredChecklists =
+  report?.checklists.filter((item) => {
+
+    const matchLocation =
+      selectedLocation === 'all' ||
+      item.location === selectedLocation
+
+    const matchType =
+      selectedType === 'all' ||
+      item.location_type === selectedType
+
+    const matchPeriod =
+      selectedPeriod === 'all' ||
+      item.period === selectedPeriod
+
+    const matchPic =
+      selectedPic === 'all' ||
+      item.pic === selectedPic
+
+    const matchStatus =
+      selectedStatus === 'all' ||
+      item.status === selectedStatus
+
+    return (
+      matchLocation &&
+      matchType &&
+      matchPeriod &&
+      matchPic &&
+      matchStatus
+    )
+
+  }) || []
 
 const handleExport = async () => {
 
@@ -181,6 +190,25 @@ const handleExport = async () => {
   )
 }
 
+const availableLocations =
+  [...new Set(
+
+    report?.checklists
+
+      ?.filter((item:any) =>
+
+        selectedType === 'all'
+          ? true
+          : item.location_type === selectedType
+
+      )
+
+      ?.map(
+        (item:any) => item.location
+      ) || []
+
+  )]
+
 return (
     <div className="p-6 space-y-5">
       {/* Header */}
@@ -193,15 +221,27 @@ return (
             Rekap checklist dan issue berdasarkan rentang tanggal
           </p>
         </div>
-        <button
-          onClick={handleExport}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg border
-                     border-gray-200 text-sm text-gray-600 hover:bg-gray-50
-                     transition-colors"
-        >
-          <Download className="w-4 h-4" />
-          Export
-        </button>
+        
+          <button
+            onClick={handleExport}
+            className="
+              flex
+              items-center
+              gap-2
+              px-4
+              py-2
+              rounded-xl
+              border
+              border-gray-200
+              bg-white
+              hover:bg-gray-50
+            "
+          >
+            <Download className="w-4 h-4" />
+
+            Export
+
+          </button>
       </div>
 
       
@@ -269,255 +309,474 @@ return (
             "
           >
 
+            <div className="px-5 pt-4 flex flex-wrap gap-2">
+
+              {selectedType !== 'all' && (
+
+                <span
+                  className="
+                  inline-flex
+                  items-center
+                  gap-2
+                  px-3
+                  py-1.5
+                  rounded-full
+                  bg-blue-50
+                  border
+                  border-blue-100
+                  text-blue-700
+                  text-xs
+                  font-medium
+                  "
+                >
+                  {selectedType}
+                </span>
+
+              )}
+
+              {selectedLocation !== 'all' && (
+
+                <span
+                  className="
+                    px-3
+                    py-1
+                    rounded-full
+                    bg-green-50
+                    text-green-700
+                    text-xs
+                    font-medium
+                  "
+                >
+                  {selectedLocation}
+                </span>
+
+              )}
+
+              {selectedPeriod !== 'all' && (
+
+                <span
+                  className="
+                    px-3
+                    py-1
+                    rounded-full
+                    bg-orange-50
+                    text-orange-700
+                    text-xs
+                    font-medium
+                  "
+                >
+                  {selectedPeriod}
+                </span>
+
+              )}
+
+            </div>
+
             <DataTable
+            headerRight={
+
+              <button
+                onClick={() =>
+                  setOpenFilter(true)
+                }
+                className="
+                  h-11
+                  px-4
+                  rounded-xl
+                  border
+                  border-gray-200
+                  bg-white
+                  hover:bg-gray-50
+                  flex
+                  items-center
+                  gap-2
+                  text-sm
+                  font-medium
+                "
+              >
+                <SlidersHorizontal
+                  className="w-4 h-4"
+                />
+
+                Filter
+
+              </button>
+
+              }
 
               title="Checklist"
 
               headerLeft={
 
-              <div className="relative">
+              <div className="flex items-center gap-3">
 
-                <CalendarRange
-                  className="
-                    pointer-events-none
-                    absolute
-                    left-4
-                    top-1/2
-                    z-10
-                    h-5
-                    w-5
-                    -translate-y-1/2
-                    text-gray-400
-                  "
-                />
+                {/* DATE */}
 
-                <DatePicker
+                <div className="relative">
 
-                  selectsRange
+                  <CalendarRange
+                    className="
+                      absolute
+                      left-3
+                      top-1/2
+                      -translate-y-1/2
+                      h-4
+                      w-4
+                      text-gray-400
+                    "
+                  />
 
-                  startDate={startDate}
+                  <DatePicker
+                    selectsRange
+                    startDate={startDate}
+                    endDate={endDate}
+                    onChange={(dates) => {
 
-                  endDate={endDate}
+                      const [start, end] = dates
 
-                  onChange={(dates) => {
+                      setStartDate(start)
+                      setEndDate(end)
 
-                    const [start, end] = dates
+                    }}
+                    dateFormat="dd MMM yyyy"
+                    className="
+                      h-11
+                      w-[260px]
+                      rounded-xl
+                      border
+                      border-gray-200
+                      pl-10
+                      pr-3
+                      text-sm
+                    "
+                  />
 
-                    if (!start && !end) {
-
-                      setStartDate(
-                        new Date(
-                          new Date().getFullYear(),
-                          new Date().getMonth(),
-                          1
-                        )
-                      )
-
-                      setEndDate(
-                        new Date()
-                      )
-
-                      return
-                    }
-
-                    setStartDate(start)
-                    setEndDate(end)
-
-                  }}
-
-                  placeholderText="Pilih Rentang Tanggal"
-
-                  dateFormat="dd MMM yyyy"
-
-                  className="
-                    h-12
-                    w-[340px]
-                    rounded-2xl
-                    border
-                    border-gray-200
-                    bg-white
-                    pl-12
-                    pr-4
-                    text-sm
-                    font-medium
-                    outline-none
-                  "
-
-                />
+                </div>
 
               </div>
 
-            }
-
-              data={
-                report?.checklists.map(
-                  (c) => ({
-                    ...c,
-                    id: c.id,
-                  })
-                ) || []
               }
+
+              data={filteredChecklists}
 
               columns={checklistColumns}
 
-            />
+              />
 
           </div>
 
-          {/* Issues table */}
-          {report?.issues?.length > 0 && (
-            <div
-              className="
-                bg-white
-                rounded-xl
-                border
-                border-gray-200
-                overflow-hidden
-              "
-            >
-              <DataTable
-                title="Daftar Issue"
-                data={
-                  report?.issues.map(
-                    (i) => ({
-                      ...i,
-                      id: i.id,
-                    })
-                  ) || []
-                }
-                columns={issueColumns}
-                searchPlaceholder="Cari issue..."
-                headerRight={
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 text-red-500" />
-
-                    <span className="text-sm text-red-600 font-medium">
-                     {report?.issues?.length || 0} issue
-                    </span>
-                  </div>
-                }
-              />
-            </div>
-          )}
+          
+          
         </>
       ) : null}
 
-      {showIssueModal && selectedIssue && (
-        <div
-          className="
-            fixed inset-0
-            bg-black/40
-            flex items-center justify-center
-            z-50
-          "
-        >
+      {openFilter && (
+
           <div
             className="
-              bg-white
-              rounded-2xl
-              w-full
-              max-w-lg
-              p-6
+              fixed
+              inset-0
+              z-50
+              bg-black/30
+              flex
+              items-center
+              justify-center
             "
           >
-            <h3 className="text-lg font-bold mb-4">
-              Detail Issue
-            </h3>
-
-            <div className="space-y-3 text-sm">
-              <div>
-                <b>Jenis:</b> {selectedIssue.type}
-              </div>
-
-              <div>
-                <b>Lokasi:</b> {selectedIssue.location}
-              </div>
-
-              <div>
-                <b>Pelapor:</b> {selectedIssue.reported_by}
-              </div>
-
-              <div>
-                <b>Tanggal:</b> {selectedIssue.date}
-              </div>
-            </div>
-
-            {selectedIssue.photos?.length > 0 && (
 
             <div
               className="
-                mt-5
-                grid
-                grid-cols-2
-                gap-3
+                bg-white
+                rounded-3xl
+                w-full
+                max-w-lg
+                p-6
+                space-y-4
               "
             >
 
-              {selectedIssue.photos.map(
-                (photo: any) => (
-
-                  <img
-
-                    key={photo.id}
-
-                    src={photo.image_url}
-
-                    alt="Issue"
-
-                    className="
-                      h-40
-                      w-full
-                      object-cover
-                      rounded-xl
-                      cursor-pointer
-                    "
-
-                    onClick={() =>
-                      window.open(
-                        photo.image_url,
-                        '_blank'
-                      )
-                    }
-
-                  />
-
-                )
-              )}
-
-            </div>
-
-          )}
-
-            <div className="mt-5">
-              <label className="text-sm font-medium">
-                Status
-              </label>
-
-            </div>
-
-            <div className="mt-4">
-                <b>Status:</b>
-                {' '}
-                {selectedIssue.status}
-              </div>
-
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => setShowIssueModal(false)}
+              <h3
                 className="
-                  flex-1
-                  h-11
-                  border
-                  rounded-lg
+                  text-lg
+                  font-semibold
                 "
               >
-                Tutup
+                Filter Data
+              </h3>
+
+              {/* Tipe */}
+              <div>
+              <label
+                className="
+                  block
+                  text-sm
+                  font-medium
+                  text-gray-600
+                  mb-2
+                "
+              >
+                Type
+              </label>
+              <Select
+                value={selectedType}
+                onValueChange={(value) => {
+                  setSelectedType(value)
+                  setSelectedLocation('all')
+                }}
+              >
+                <SelectTrigger className="w-full h-12 rounded-xl">
+                  <SelectValue placeholder="Semua Tipe" />
+                </SelectTrigger>
+
+                <SelectContent position="popper">
+
+                  <SelectItem value="all">
+                    Semua Tipe
+                  </SelectItem>
+
+                  {[...new Set(
+                    report?.checklists.map(
+                      (x:any) => x.location_type
+                    )
+                  )].map((item:any) => (
+
+                    <SelectItem
+                      key={item}
+                      value={item}
+                    >
+                      {item}
+                    </SelectItem>
+
+                  ))}
+
+                </SelectContent>
+              </Select>
+              </div>
+
+              {/* Lokasi */}
+              <div>
+              <label
+                className="
+                  block
+                  text-sm
+                  font-medium
+                  text-gray-600
+                  mb-2
+                "
+              >
+                Lokasi
+              </label>
+              <Select
+                value={selectedLocation}
+                onValueChange={setSelectedLocation}
+              >
+                <SelectTrigger className="w-full h-12 rounded-xl">
+                  <SelectValue placeholder="Semua Lokasi" />
+                </SelectTrigger>
+
+                <SelectContent position="popper">
+
+                  <SelectItem value="all">
+                    Semua Lokasi
+                  </SelectItem>
+
+                  {availableLocations.map((item:any) => (
+
+                    <SelectItem
+                      key={item}
+                      value={item}
+                    >
+                      {item}
+                    </SelectItem>
+
+                  ))}
+
+                </SelectContent>
+              </Select>
+              </div>
+
+              {/* Periode */}
+              <div>
+              <label
+                className="
+                  block
+                  text-sm
+                  font-medium
+                  text-gray-600
+                  mb-2
+                "
+              >
+                Periode
+              </label>
+
+              <Select
+                value={selectedPeriod}
+                onValueChange={setSelectedPeriod}
+              >
+                <SelectTrigger className="w-full h-12 rounded-xl">
+                  <SelectValue placeholder="Semua Periode" />
+                </SelectTrigger>
+
+                <SelectContent position="popper">
+
+                  <SelectItem value="all">
+                    Semua Periode
+                  </SelectItem>
+
+                  {[...new Set(
+                    report?.checklists.map(
+                      (x:any) => x.period
+                    )
+                  )].map((item:any) => (
+
+                    <SelectItem
+                      key={item}
+                      value={item}
+                    >
+                      {item}
+                    </SelectItem>
+
+                  ))}
+
+                </SelectContent>
+              </Select>
+              </div>
+
+              <div>
+              <label
+                className="
+                  block
+                  text-sm
+                  font-medium
+                  text-gray-600
+                  mb-2
+                "
+              >
+                Pic
+              </label>
+              <Select
+                value={selectedPic}
+                onValueChange={setSelectedPic}
+              >
+                <SelectTrigger className="w-full h-12 rounded-xl">
+                  <SelectValue placeholder="Semua Periode" />
+                </SelectTrigger>
+
+                <SelectContent position="popper">
+
+                  <SelectItem value="all">
+                    Semua Periode
+                  </SelectItem>
+
+                  {[...new Set(
+                    report?.checklists.map(
+                      (x:any) => x.period
+                    )
+                  )].map((item:any) => (
+
+                    <SelectItem
+                      key={item}
+                      value={item}
+                    >
+                      {item}
+                    </SelectItem>
+
+                  ))}
+
+                </SelectContent>
+              </Select>
+              </div>
+
+              <div>
+              <label
+                className="
+                  block
+                  text-sm
+                  font-medium
+                  text-gray-600
+                  mb-2
+                "
+              >
+                Status
+              </label>
+              <Select
+                value={selectedStatus}
+                onValueChange={setSelectedStatus}
+              >
+                <SelectTrigger className="w-full h-12 rounded-xl">
+                  <SelectValue placeholder="Semua Status" />
+                </SelectTrigger>
+
+                <SelectContent position="popper">
+
+                  <SelectItem value="all">
+                    Semua Status
+                  </SelectItem>
+
+                  <SelectItem value="done">
+                    Done
+                  </SelectItem>
+
+                  <SelectItem value="pending">
+                    Pending
+                  </SelectItem>
+
+                </SelectContent>
+              </Select>
+              </div>
+
+              <button
+                onClick={() => {
+
+                  setSelectedType('all')
+                  setSelectedLocation('all')
+                  setSelectedPeriod('all')
+                  setSelectedPic('all')
+                  setSelectedStatus('all')
+
+                }}
+                className="
+                  px-4
+                  py-2
+                  rounded-xl
+                  border
+                  border-red-200
+                  text-red-600
+                "
+              >
+                Reset
               </button>
+
+              <div
+                className="
+                  flex
+                  justify-end
+                  gap-2
+                  pt-2
+                "
+              >
+
+                <button
+                  onClick={() =>
+                    setOpenFilter(false)
+                  }
+                  className="
+                    px-4
+                    py-2
+                    rounded-xl
+                    border
+                  "
+                >
+                  Tutup
+                </button>
+
+              </div>
+
             </div>
+
           </div>
-        </div>
-        
-      )}
+
+        )}
     </div>
   )
 }

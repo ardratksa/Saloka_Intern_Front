@@ -14,6 +14,8 @@ import MasterLokasi from '@/pages/admin/master/MasterLokasi'
 import MasterJobPage from '@/pages/admin/master/MasterJob'
 import MasterIssue from '@/pages/admin/master/MasterIssue'
 import AdminReport from '@/pages/admin/report/AdminReport'
+import ReportIssue from '@/pages/admin/report/ReportIssue'
+import WorkProgramReportPage from '@/pages/admin/report/WorkProgramReportPage'
 import ProgramKerjaPage from '@/pages/admin/program-kerja/ProgramKerja'
 import OutPlanPage from '@/pages/admin/program-kerja/OutPlan'
 
@@ -22,8 +24,6 @@ import StaffLayout from '@/layouts/StaffLayout'
 import DashboardPage from '@/pages/staff/DashboardPage'
 import ChecklistPage from '@/pages/staff/ChecklistPage'
 import IssuePage from '@/pages/staff/IssuePage'
-import ScReportPage from '@/pages/staff/ScReportPage'
-import WeeklyReportPage from '@/pages/staff/WeeklyReportPage'
 import WorkPlanPage from '@/pages/staff/WorkPlanPage'
 
 // kalau nanti ada profile page tinggal aktifkan
@@ -122,9 +122,21 @@ export default function App() {
           />
 
           <Route
-            path="report"
-            element={<AdminReport />}
+          path="report"
+          element={<AdminReport />}
           />
+
+          <Route
+          path="report/issue"
+          element={<ReportIssue />}
+          />
+
+          <Route
+          path="/admin/report/work-program"
+          element={<WorkProgramReportPage/>}
+          />
+
+        
         </Route>
 
         {/* ── STAFF ───────────────────────── */}
@@ -156,28 +168,13 @@ export default function App() {
             element={<IssuePage />}
           />
 
-          <Route
-            path="sc-report"
-            element={<ScReportPage />}
-          />
+    
 
           <Route
             path="work-plan"
             element={<WorkPlanPage />}
           />
 
-          <Route
-            path="weekly-report"
-            element={<WeeklyReportPage />}
-          />
-
-          {/* aktifkan kalau sudah ada halaman profile */}
-          {/*
-          <Route
-            path="profile"
-            element={<ProfilePage />}
-          />
-          */}
         </Route>
 
         {/* fallback */}

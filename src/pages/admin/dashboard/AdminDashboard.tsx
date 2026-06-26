@@ -1,5 +1,3 @@
-import ExcelJS from 'exceljs'
-import { saveAs } from 'file-saver'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getDailySummary } from '@/api/checklist'
@@ -7,6 +5,8 @@ import { getIssues } from '@/api/issue'
 import { getLocations } from '@/api/location'
 import { getPeriods } from '@/api/period'
 import { getLocationTypes } from '@/api/location'
+import { exportDashboard } from '@/api/dashboard'
+import { saveAs } from 'file-saver'
 import {
   ClipboardCheck,
   AlertTriangle,
@@ -15,11 +15,21 @@ import {
   Eye,
   Download,
 } from 'lucide-react'
+
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
 
 import {
   Command,
@@ -45,22 +55,6 @@ type Session = {
   score: number
   status: 'OK' | 'Tidak Ok'
 }
-
-const imageUrlToBase64 = async (url: string) => {
-  const response = await fetch(url)
-  const blob = await response.blob()
-
-  return new Promise<string>((resolve) => {
-    const reader = new FileReader()
-
-    reader.onloadend = () => {
-      resolve(reader.result as string)
-    }
-
-    reader.readAsDataURL(blob)
-  })
-}
-
 
 export default function AdminDashboard() {
   const today = new Date().toISOString().split('T')[0]
@@ -149,19 +143,26 @@ console.log(issues)
           return false
         }
 
+        if (
+          filterType !== 'all' &&
+          s.location_type !==
+            masterTypes.find(
+              (t: any) =>
+                String(t.id) === filterType
+            )?.name
+        ) {
+          return false
+        }
+
         return true
       })
-
-  
-
-  const shiftTimes = periods
 
   const statusColor = (status: string) => {
     if (status === 'OK') {
       return 'text-green-600 bg-green-50 border-green-200'
     }
 
-    if (status === 'Tidak OK') {
+    if (status === 'Perlu Perbaikan') {
       return 'text-red-600 bg-red-50 border-red-200'
     }
 
@@ -174,157 +175,45 @@ console.log(issues)
     return 'text-red-600'
   }
 
-  const exportExcel = async () => {
+  const handleExport = async () => {
+  try {
 
-    const workbook = new ExcelJS.Workbook()
+    const blob = await exportDashboard({
+      date: dateFrom,
 
-    const sheet =
-      workbook.addWorksheet(
-        'MASTER OUTPUT'
-      )
+      location_id:
+        filterLoc !== 'all'
+          ? locations.find(
+              (l: any) =>
+                l.name === filterLoc
+            )?.id
+          : undefined,
 
-    sheet.mergeCells('A1:I1')
+      location_type_id:
+        filterType !== 'all'
+          ? filterType
+          : undefined,
 
-    sheet.getCell('A1').value =
-      'MASTER OUTPUT'
-
-    sheet.getCell('A1').font = {
-      bold: true,
-      size: 16,
-    }
-
-    sheet.addRow([])
-
-    sheet.addRow([
-      'NO',
-      'TANGGAL',
-      'TIME',
-      'LOKASI',
-      'Y',
-      'N',
-      'ISSUE',
-      'REMARK',
-      'DOKUMENTASI',
-    ])
-
-    const filteredIssues = issues.filter((issue: any) => {
-
-    if (
-      filterLoc !== 'all' &&
-      issue.location !== filterLoc
-    ) {
-      return false
-    }
-
-    if (
-      dateFrom &&
-      issue.date !== dateFrom
-    ) {
-      return false
-    }
-
-    return true
-  })
-
-    let rowIndex = 4
-
-    for (
-      let i = 0;
-      i < filteredIssues.length;
-      i++
-    ) {
-
-      const issue =
-        filteredIssues[i]
-
-      const time =
-        issue.created_at?.split(' ')[1] ?? ''
-
-      const row =
-        sheet.addRow([
-          i + 1,
-          issue.date,
-          time,
-          issue.location,
-          issue.status === 'resolved'
-            ? 'Y'
-            : '',
-          issue.status === 'open'
-            ? 'N'
-            : '',
-          issue.type,
-          issue.description,
-          '',
-        ])
-
-      sheet.getRow(
-        row.number
-      ).height = 100
-
-      if (
-        issue.photos?.length
-      ) {
-
-        try {
-
-          const base64 =
-            await imageUrlToBase64(
-              issue.photos[0].image_url
-            )
-
-          const imageId =
-            workbook.addImage({
-              base64,
-              extension: 'jpeg',
-            })
-
-          sheet.addImage(
-            imageId,
-            {
-              tl: {
-                col: 8,
-                row: rowIndex - 1,
-              },
-
-              ext: {
-                width: 120,
-                height: 90,
-              },
-            }
-          )
-
-        } catch (err) {
-
-          console.error(
-            'Gagal load image',
-            err
-          )
-        }
-      }
-
-      rowIndex++
-    }
-
-    sheet.columns = [
-      { width: 8 },
-      { width: 18 },
-      { width: 12 },
-      { width: 25 },
-      { width: 8 },
-      { width: 8 },
-      { width: 25 },
-      { width: 40 },
-      { width: 25 },
-    ]
-
-    const buffer =
-      await workbook.xlsx.writeBuffer()
+      shift:
+        filterShift !== 'all'
+          ? filterShift
+          : undefined,
+    })
 
     saveAs(
-      new Blob([buffer]),
-      `Issue_Report_${dateFrom}.xlsx`
+      blob,
+      `Dashboard_Issue_${dateFrom}.xlsx`
+    )
+
+  } catch (error) {
+
+    console.error(error)
+
+    alert(
+      'Gagal export data'
     )
   }
+}
 
   const sessionIssues = detail
     ? issues.filter((i: any) => {
@@ -358,7 +247,7 @@ console.log(issues)
           value={dateFrom}
           onChange={(e) => setDateFrom(e.target.value)}
           className="
-            h-12
+            h-8
             w-48
             rounded-xl
             border
@@ -367,41 +256,38 @@ console.log(issues)
           "
         />
 
-        <select
+        <Select
           value={filterType}
-          onChange={(e) => {
-            setFilterType(e.target.value)
+          onValueChange={(value) => {
+            setFilterType(value)
             setFilterLoc('all')
           }}
-          className="
-            h-12
-            w-52
-            rounded-xl
-            border
-            border-gray-200
-            px-4
-            bg-white
-          "
         >
-          <option value="all">
-            Semua Tipe
-          </option>
+          <SelectTrigger className="h-12 w-64 rounded-xl">
+            <SelectValue placeholder="Semua Tipe" />
+          </SelectTrigger>
 
-          {masterTypes
-            .filter(
-              (t: any) =>
-                t.name === 'Toilet' ||
-                t.name === 'Laktasi'
-            )
-            .map((t: any) => (
-              <option
-                key={t.id}
-                value={t.id}
-              >
-                {t.name}
-              </option>
-          ))}
-        </select>
+          <SelectContent>
+            <SelectItem value="all">
+              Semua Tipe
+            </SelectItem>
+
+            {masterTypes
+              .filter(
+                (t: any) =>
+                  t.name === 'Toilet' ||
+                  t.name === 'Laktasi'
+              )
+              .map((t: any) => (
+                <SelectItem
+                  key={t.id}
+                  value={String(t.id)}
+                >
+                  {t.name}
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
 
         <Popover
           open={openLocation}
@@ -410,14 +296,17 @@ console.log(issues)
           <PopoverTrigger asChild>
             <button
               className="
+                h-8
                 w-64
                 border
                 border-gray-200
                 rounded-xl
-                px-3
-                py-2
-                text-left
+                px-4
+                flex
+                items-center
+                justify-between
                 bg-white
+                text-left
               "
             >
               {filterLoc === 'all'
@@ -487,35 +376,32 @@ console.log(issues)
           </PopoverContent>
         </Popover>
 
-       <select
+        <Select
           value={filterShift}
-          onChange={(e) => setFilterShift(e.target.value)}
-          className="
-            h-12
-            w-44
-            rounded-xl
-            border
-            border-gray-200
-            px-4
-            bg-white
-          "
+          onValueChange={setFilterShift}
         >
-          <option value="all">
-            Semua Shift
-          </option>
+          <SelectTrigger className="h-12 w-56 rounded-xl">
+            <SelectValue placeholder="Semua Shift" />
+          </SelectTrigger>
 
-          {shiftTimes.map((period) => (
-            <option
-              key={period.id}
-              value={period.name}
-            >
-              {period.name}
-            </option>
-          ))}
-        </select>
+          <SelectContent>
+            <SelectItem value="all">
+              Semua Shift
+            </SelectItem>
+
+            {periods.map((period: any) => (
+              <SelectItem
+                key={period.id}
+                value={period.name}
+              >
+                {period.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         <button
-          onClick={exportExcel}
+          onClick={handleExport}
           className="
             ml-auto
             h-12

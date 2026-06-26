@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Skeleton } from '@/components/ui/skeleton'
+import { createPortal } from 'react-dom'
 import {
   Dialog,
   DialogContent,
@@ -250,7 +251,11 @@ export default function IssuePage() {
       {/* Detail Issue */}
         <Dialog
           open={!!selectedIssue}
-          onOpenChange={() => setSelectedIssue(null)}
+          onOpenChange={(open) => {
+          if (!open) {
+            setSelectedIssue(null)
+          }
+        }}
         >
           <DialogContent
             className="
@@ -326,9 +331,15 @@ export default function IssuePage() {
                 {selectedIssue.photos.length > 0 && (
                   <div>
 
-                    <p className="font-semibold text-gray-900 mb-3">
-                      Dokumentasi
-                    </p>
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="font-semibold text-gray-900">
+                        Dokumentasi
+                      </p>
+
+                      <span className="text-xs text-gray-500">
+                        {selectedIssue.photos.length} Foto
+                      </span>
+                    </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
 
@@ -336,9 +347,10 @@ export default function IssuePage() {
                         <img
                           key={p.id}
                           src={p.image_url}
-                          onClick={() =>
+                          onClick={(e) => {
+                            e.stopPropagation()
                             setPreviewImage(p.image_url)
-                          }
+                          }}
                           className="
                             h-52
                             w-full
@@ -497,45 +509,66 @@ export default function IssuePage() {
 
           </DialogContent>
         </Dialog>
-        {previewImage && (
-          <div
-            className="
-              fixed
-              inset-0
-             bg-black/90 backdrop-blur-sm
-              z-[9999]
-              flex
-              items-center
-              justify-center
-              p-4
-            "
-            onClick={() => setPreviewImage(null)}
-          >
-            <button
+        {
+          previewImage &&
+          createPortal(
+            <div
               className="
-                absolute
-                top-5
-                right-5
-                text-white
-                text-3xl
-                font-bold
+                fixed
+                inset-0
+                bg-black/95
+                backdrop-blur-md
+                flex
+                items-center
+                justify-center
+                p-4
+                pointer-events-auto
               "
+              style={{ zIndex: 999 }}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setPreviewImage(null)
+              }}
             >
-              ×
-            </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setPreviewImage(null)
+                }}
+                className="
+                  absolute
+                  top-4
+                  right-4
+                  w-12
+                  h-12
+                  rounded-full
+                  bg-black/50
+                  text-white
+                  text-2xl
+                  flex
+                  items-center
+                  justify-center
+                "
+              >
+                ✕
+              </button>
 
-            <img
-              src={previewImage}
-              alt=""
-              className="
-                max-w-[95vw]
-                max-h-[90vh]
-                object-contain
-                rounded-xl
-              "
-            />
-          </div>
-        )}
+              <img
+                src={previewImage}
+                alt=""
+                onClick={(e) => e.stopPropagation()}
+                className="
+                  max-w-[95vw]
+                  max-h-[90vh]
+                  object-contain
+                  rounded-xl
+                "
+              />
+            </div>,
+            document.body
+          )
+        }
     </div>
   )
 }

@@ -404,33 +404,30 @@ export function useScheduleActions({
 
     } else {
 
-      createMutation.mutate(
+      selectedDates.forEach((date) => {
 
-        payload,
+        createMutation.mutate({
 
-        {
+          ...payload,
 
-          onSuccess: () => {
+          scheduled_dates: [
+            date.getDate()
+          ]
 
-            setStartTime('')
-            setEndTime('')
+        })
 
-            setSelectedJobId(
-              null
-            )
+      })
 
-            setArea('')
+      setStartTime('')
+      setEndTime('')
 
-            setLocation('')
+      setSelectedJobId(null)
 
-            setSubLocation('')
+      setArea('')
+      setLocation('')
+      setSubLocation('')
 
-            setOpenModal(
-              false
-            )
-          },
-        }
-      )
+      setOpenModal(false)
 
     }
 

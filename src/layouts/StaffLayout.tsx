@@ -70,10 +70,14 @@ export default function StaffLayout() {
       {/* Top Header */}
       <header
         className="bg-white border-b border-gray-100 px-4 py-3
-                   flex items-center justify-between shrink-0"
+                  flex items-center justify-between shrink-0"
       >
-        <div className="flex items-center gap-3">
-    
+        <div className="flex items-center pl-2">
+          <img
+            src="/logo-saloka.png"
+            alt="Saloka"
+            className="h-8 w-auto"
+          />
         </div>
 
         <DropdownMenu>

@@ -4,6 +4,7 @@ import { useAuthStore } from '@/store/authStore'
 import { getChecklist, updateChecklist, uploadChecklistDoc, } from '@/api/checklist'
 import { getActivePeriod } from '@/api/period'
 import { createIssue } from '@/api/issue'
+import { getMasterIssues } from '@/api/masterIssue'
 import { useNavigate } from 'react-router-dom'
 import {
   CheckCircle2,
@@ -18,6 +19,13 @@ import {
 import { cn } from '@/lib/utils'
 import toast from 'react-hot-toast'
 import type { ChecklistItem } from '@/types'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 export default function ChecklistPage() {
   const navigate            = useNavigate()
@@ -33,15 +41,24 @@ export default function ChecklistPage() {
   const galleryInputRef = useRef<HTMLInputElement>(null)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [checklistPhotos, setChecklistPhotos] = useState<Record<number, File>>({})
-  const [issueType, setIssueType] = useState('kotor')
+  const [issueType, setIssueType] = useState('')
   const checklistCameraRef = useRef<HTMLInputElement>(null)
   const [selectedJobId, setSelectedJobId] = useState<number | null>(null)
+  const [showFinishModal, setShowFinishModal] =
+  useState(false)
+  const [showExitModal, setShowExitModal] =
+    useState(false)
 
   const { data: activePeriod } = useQuery({
     queryKey: ['active-period'],
     queryFn: getActivePeriod,
     retry: false,
   })
+
+  const { data: masterIssues = [] } = useQuery({
+  queryKey: ['master-issues'],
+  queryFn: getMasterIssues,
+})
 
   const selectedPeriodId = activePeriod?.id?.toString() ?? ''
 
@@ -110,7 +127,7 @@ export default function ChecklistPage() {
       setOpenItem(null)
       setNoteVal('')
       setPhotoFile(null)
-      setIssueType('kotor')
+      setIssueType(masterIssues[0]?.name ?? '')
     },
 
     onError: () => {
@@ -150,14 +167,30 @@ export default function ChecklistPage() {
 
   })
 
-  const handleToggle = (item: ChecklistItem) => {
-    if (!activeLocation || !selectedPeriodId) return
+  const handleToggle = (
+    item: ChecklistItem
+  ) => {
+
+    if (
+      !activeLocation ||
+      !selectedPeriodId
+    ) return
+
     updateMut.mutate({
+
       location_id: activeLocation.id,
-      job_id:      item.job_id,
-      periode_id:  Number(selectedPeriodId),
-      date:        today,
-      status:      item.status === 'done' ? 'pending' : 'done',
+
+      job_id: item.job_id,
+
+      periode_id: Number(selectedPeriodId),
+
+      date: today,
+
+      status:
+        item.status === 'done'
+          ? 'pending'
+          : 'done',
+
     })
   }
 
@@ -260,17 +293,13 @@ export default function ChecklistPage() {
 
               <div>
 
-                <p className="text-sm text-white/80">
+                <p className="text-sm text-white/90 font-bold">
                   Cleaning Checklist
                 </p>
 
-                <h1 className="text-3xl font-bold mt-1">
-                  Checklist
-                </h1>
-
                 <div className="flex items-center gap-2 mt-2">
 
-                  <MapPin className="w-4 h-4 text-white/80" />
+                  <MapPin className="w-4 h-4 text-white/80 font-bold" />
 
                   <span className="text-sm text-white/90">
                     {activeLocation.name}
@@ -280,87 +309,99 @@ export default function ChecklistPage() {
 
               </div>
 
-              <button
-                onClick={() => navigate('/scan')}
+              <div className="flex gap-2">
+
+                <button
+                  onClick={() => setShowExitModal(true)} >
+                    <QrCode className="w-6 h-6 text-white" />
+                  </button>
+
+              </div>
+
+            </div>
+            <div className="mt-5">
+
+              <div
                 className="
-                  w-12
-                  h-12
-                  rounded-2xl
-                  bg-white/20
+                  bg-white/15
                   backdrop-blur
-                  flex
-                  items-center
-                  justify-center
+                  rounded-2xl
+                  p-4
                 "
               >
-                <QrCode className="w-6 h-6 text-white" />
-              </button>
+
+                <div className="flex justify-between">
+
+                  <div>
+
+                    <p className="text-xs text-white/70">
+                      Periode Aktif
+                    </p>
+
+                    <p className="font-bold text-lg">
+                      {activePeriod?.name}
+                    </p>
+
+                    <p className="text-xs text-white/80">
+                      {activePeriod?.time_start?.slice(0,5)}
+                      {' - '}
+                      {activePeriod?.time_end?.slice(0,5)}
+                    </p>
+
+                  </div>
+
+                  <div className="text-right">
+
+                    <p className="text-xs text-white/70">
+                      Progress
+                    </p>
+
+                    <p className="text-3xl font-bold">
+                      {progress}%
+                    </p>
+
+                  </div>
+
+                </div>
+
+                <div className="mt-4">
+
+                  <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+
+                    <div
+                      className="
+                        h-full
+                        bg-white
+                        rounded-full
+                      "
+                      style={{
+                        width: `${progress}%`,
+                      }}
+                    />
+
+                  </div>
+
+                  <div className="flex justify-between mt-2">
+
+                    <p className="text-xs text-white/80">
+                      {doneItems}/{totalItems} selesai
+                    </p>
+
+                    <p className="text-xs text-white/80">
+                      {totalItems - doneItems} tersisa
+                    </p>
+
+                  </div>
+
+                </div>
+
+              </div>
 
             </div>
 
           </div>
 
         </div>
-
-      {/* Period selector */}
-      <div className="px-4 py-3">
-        {activePeriod ? (
-          <div className="bg-white rounded-2xl border border-green-200 p-4">
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-green-600" />
-              <span className="text-sm font-semibold text-green-700">
-                Periode Aktif
-              </span>
-            </div>
-            <p className="text-base font-bold text-gray-900 mt-1">
-              {activePeriod.name}
-            </p>
-
-            <p className="text-xs text-gray-500">
-              {activePeriod.time_start.slice(0, 5)}
-              {' - '}
-              {activePeriod.time_end.slice(0, 5)}
-            </p>
-          </div>
-        ) : (
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-4">
-            <p className="text-sm font-semibold text-red-700">
-              Tidak ada periode aktif
-            </p>
-
-            <p className="text-xs text-red-500 mt-1">
-              Checklist tidak dapat dilakukan saat ini
-            </p>
-          </div>
-        )}
-      </div>
-
-      <div className="px-4 pb-3">
-        <div className="bg-white rounded-2xl p-4 border">
-          <div className="flex justify-between mb-2">
-            <span className="text-sm font-medium">
-              Progress Checklist
-            </span>
-
-            <span className="text-sm font-bold text-brand-600">
-              {progress}%
-            </span>
-          </div>
-
-          <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-brand-600"
-              style={{
-                width: `${progress}%`
-              }}
-            />
-          </div>
-
-          <p className="text-xs text-gray-500 mt-2">
-            {doneItems} dari {totalItems} item selesai
-          </p>
-        </div>
-      </div>
 
       {/* Checklist items */}
       <div className="px-4 pb-4">
@@ -416,8 +457,8 @@ export default function ChecklistPage() {
                     <p className={cn(
                       'text-sm leading-snug',
                       item.status === 'done'
-                        ? 'line-through text-gray-400'
-                        : 'text-gray-800 font-medium'
+                      ? 'text-green-700 font-medium'
+                      : 'text-gray-800 font-medium'
                     )}>
                       {item.name}
                     </p>
@@ -490,15 +531,21 @@ export default function ChecklistPage() {
                   <button
                     onClick={(e) => {
 
-                      e.stopPropagation()
+                    e.stopPropagation()
 
-                      setOpenItem(item)
+                    setOpenItem(item)
 
-                      setNoteVal(item.note ?? '')
+                    setNoteVal(item.note ?? '')
 
-                      setShowNoteModal(true)
+                    if (masterIssues.length > 0) {
+                      setIssueType(masterIssues[0].name)
+                    } else {
+                      setIssueType('')
+                    }
 
-                    }}
+                    setShowNoteModal(true)
+
+                  }}
                     className={cn(
                       'w-10 h-10 rounded-xl flex items-center justify-center',
                       item.has_issue
@@ -627,28 +674,210 @@ export default function ChecklistPage() {
             </p>
 
             <button
-              onClick={() => {
-
-                setActiveLocation(null)
-
-                navigate('/scan')
-
-              }}
+              onClick={() => setShowFinishModal(true)}
               className="
+                mt-4
                 w-full
                 h-12
                 rounded-2xl
                 bg-green-600
                 text-white
                 font-semibold
+                flex
+                items-center
+                justify-center
+                gap-2
+                active:scale-[0.98]
+                transition-all
               "
             >
+              <QrCode className="w-4 h-4" />
               Scan Lokasi Berikutnya
             </button>
 
           </div>
 
         )}
+
+        {showExitModal && (
+
+          <div
+            className="
+              fixed inset-0
+              bg-black/60
+              backdrop-blur-sm
+              z-50
+              flex items-center justify-center
+              p-4
+            "
+          >
+
+            <div
+              className="
+                bg-white
+                rounded-3xl
+                p-6
+                w-full
+                max-w-sm
+              "
+            >
+
+              <h3 className="font-bold text-lg">
+                Keluar Lokasi
+              </h3>
+
+              <p className="text-sm text-gray-500 mt-2">
+                Yakin ingin keluar dari lokasi ini dan scan lokasi lain?
+              </p>
+
+              <div className="flex gap-3 mt-5">
+
+                <button
+                  onClick={() =>
+                    setShowExitModal(false)
+                  }
+                  className="
+                    flex-1
+                    h-11
+                    border
+                    rounded-xl
+                  "
+                >
+                  Batal
+                </button>
+
+                <button
+                  onClick={() => {
+
+                    setActiveLocation(null)
+
+                    navigate('/scan')
+
+                  }}
+                  className="
+                    flex-1
+                    h-11
+                    bg-brand-600
+                    text-white
+                    rounded-xl
+                  "
+                >
+                  Keluar
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        )}
+
+        {showFinishModal && (
+
+          <div
+            className="
+              fixed inset-0
+              bg-black/60
+              backdrop-blur-sm
+              z-50
+              flex items-center justify-center
+              p-4
+            "
+          >
+
+            <div
+              className="
+                bg-white
+                rounded-3xl
+                p-6
+                w-full
+                max-w-sm
+              "
+            >
+
+              <div
+                className="
+                  w-14 h-14
+                  rounded-full
+                  bg-green-100
+                  flex items-center justify-center
+                  mx-auto
+                "
+              >
+                <CheckCircle2
+                  className="
+                    w-8 h-8
+                    text-green-600
+                  "
+                />
+              </div>
+
+              <h3
+                className="
+                  font-bold
+                  text-lg
+                  text-center
+                  mt-4
+                "
+              >
+                Checklist Selesai
+              </h3>
+
+              <p
+                className="
+                  text-sm
+                  text-gray-500
+                  text-center
+                  mt-2
+                "
+              >
+                Semua pekerjaan lokasi ini sudah selesai diperiksa.
+              </p>
+
+              <div className="flex gap-3 mt-5">
+
+                <button
+                  onClick={() =>
+                    setShowFinishModal(false)
+                  }
+                  className="
+                    flex-1
+                    h-11
+                    border
+                    rounded-xl
+                  "
+                >
+                  Kembali
+                </button>
+
+                <button
+                  onClick={() => {
+
+                    setActiveLocation(null)
+
+                    navigate('/scan')
+
+                  }}
+                  className="
+                    flex-1
+                    h-11
+                    bg-green-600
+                    text-white
+                    rounded-xl
+                  "
+                >
+                  Scan Lagi
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        )}
+
       {/* Modal Issue */}
         {showNoteModal && (
           <div
@@ -724,24 +953,25 @@ export default function ChecklistPage() {
                     Jenis Issue
                   </label>
 
-                  <select
+                  <Select
                     value={issueType}
-                    onChange={(e) => setIssueType(e.target.value)}
-                    className="
-                      w-full
-                      h-12
-                      px-4
-                      rounded-xl
-                      border
-                      border-gray-200
-                      bg-white
-                    "
+                    onValueChange={setIssueType}
                   >
-                    <option value="kotor">Kotor</option>
-                    <option value="kerusakan">Kerusakan</option>
-                    <option value="material_habis">Material Habis</option>
-                    <option value="lainnya">Lainnya</option>
-                  </select>
+                    <SelectTrigger className="h-12 rounded-xl border-gray-200">
+                      <SelectValue placeholder="Pilih jenis issue" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {masterIssues.map((issue) => (
+                        <SelectItem
+                          key={issue.id}
+                          value={issue.name}
+                        >
+                          {issue.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
@@ -887,7 +1117,7 @@ export default function ChecklistPage() {
                       setShowNoteModal(false)
                       setPhotoFile(null)
                       setNoteVal('')
-                      setIssueType('kotor')
+                      setIssueType(masterIssues[0]?.name ?? '')
                       setOpenItem(null)
                     }}
                     className="

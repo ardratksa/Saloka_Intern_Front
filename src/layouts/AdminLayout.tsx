@@ -85,10 +85,31 @@ const NAV = [
     ],
   },
   {
-    label: 'Report',
-    icon: BarChart2,
-    to: '/admin/report',
-  },
+  label: 'Report',
+  icon: BarChart2,
+
+  children: [
+
+    {
+      label: 'Checklist',
+      icon: BarChart2,
+      to: '/admin/report',
+    },
+
+    {
+      label: 'Issue',
+      icon: BarChart2,
+      to: '/admin/report/issue',
+    },
+
+    {
+      label: 'Work Program',
+      icon: BarChart2,
+      to: '/admin/report/work-program',
+    },
+    
+  ],
+},
 ]
 
 export default function AdminLayout() {

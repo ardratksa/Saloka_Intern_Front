@@ -9,6 +9,16 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+
+import {
+  Layers3,
+  Tag,
   Wrench,
   MapPin,
   Calendar,
@@ -35,12 +45,21 @@ type StaffWorkProgram = {
   job?: {
     job?: string
   }
+  scheduled_dates?: number[]
+    month?: number
+    year?: number
 }
 
 export default function WorkPlanPage() {
   const queryClient = useQueryClient()
 
   const [filterType, setFilterType] = useState('all')
+
+  const [filterLocation, setFilterLocation] =
+  useState('all')
+
+  const [filterCategory, setFilterCategory] =
+  useState('all')
 
   const [selectedPlan, setSelectedPlan] =
   useState<StaffWorkProgram | null>(null)
@@ -56,6 +75,9 @@ export default function WorkPlanPage() {
 
   const afterCameraRef =
   useRef<HTMLInputElement>(null)
+
+  const [previewImage, setPreviewImage] =
+  useState<string | null>(null)
 
   const { data: plans, isLoading } = useQuery({
     queryKey: ['work-plans', filterType],
@@ -98,6 +120,8 @@ export default function WorkPlanPage() {
   )
 }
       })
+  
+      const today = new Date().getDate()
 
   return (
     <div className="p-4">
@@ -127,57 +151,169 @@ export default function WorkPlanPage() {
           Daftar pekerjaan dari admin
         </p>
       </div>
-
-      <div
-        className="
-          flex
-          gap-2
-          mb-5
-          overflow-x-auto
-          pb-1
-        "
-      >
-
-        {['all', 'weekly', 'monthly'].map((t) => (
-
-          <button
-            key={t}
-            onClick={() => setFilterType(t)}
-            className={cn(
-              `
-                px-5
-                py-2.5
-                rounded-full
-                text-sm
-                font-semibold
-                whitespace-nowrap
-                transition-all
-              `,
-              filterType === t
-                ? `
-                    bg-brand-600
-                    text-white
-                    shadow-md
-                  `
-                : `
-                    bg-white
-                    border
-                    border-gray-200
-                    text-gray-600
-                  `
-            )}
+      
+          <div
+            className="
+              grid
+              grid-cols-3
+              gap-2
+              mb-5
+            "
           >
-            {t === 'all'
-              ? 'Semua'
-              : t === 'weekly'
-              ? 'Weekly'
-              : 'Monthly'}
-          </button>
 
-        ))}
+            <Select
+              value={filterType}
+              onValueChange={setFilterType}
+            >
 
-      </div>
+              <SelectTrigger
+                className="
+                  rounded-2xl
+                  h-14
+                  border-green-500
+                "
+              >
 
+                <div className="flex items-center gap-2">
+
+                  <Layers3
+                    className="
+                      h-5
+                      w-5
+                      text-slate-400
+                    "
+                  />
+
+                  <SelectValue />
+
+                </div>
+
+              </SelectTrigger>
+
+              <SelectContent>
+
+                <SelectItem value="all">
+                  Semua
+                </SelectItem>
+
+                <SelectItem value="weekly">
+                  Weekly
+                </SelectItem>
+
+                <SelectItem value="monthly">
+                  Monthly
+                </SelectItem>
+
+              </SelectContent>
+
+            </Select>
+
+            <Select
+              value={filterLocation}
+              onValueChange={setFilterLocation}
+            >
+
+              <SelectTrigger
+                className="
+                  rounded-2xl
+                  h-14
+                "
+              >
+
+                <div className="flex items-center gap-2">
+
+                  <MapPin
+                    className="
+                      h-5
+                      w-5
+                      text-slate-400
+                    "
+                  />
+
+                  <SelectValue placeholder="Lokasi" />
+
+                </div>
+
+              </SelectTrigger>
+
+              <SelectContent>
+
+                <SelectItem value="all">
+                  Lokasi
+                </SelectItem>
+
+                {[
+                  ...new Set(
+                    (plans?.data ?? [])
+                      .map(
+                        (item: StaffWorkProgram) =>
+                          item.location_name
+                      )
+                      .filter(Boolean)
+                  ),
+                ].map((loc) => (
+
+                  <SelectItem
+                    key={String(loc)}
+                    value={String(loc)}
+                  >
+                    {String(loc)}
+                  </SelectItem>
+
+                ))}
+
+              </SelectContent>
+
+            </Select>
+
+            <Select
+              value={filterCategory}
+              onValueChange={setFilterCategory}
+            >
+
+              <SelectTrigger
+                className="
+                  rounded-2xl
+                  h-14
+                "
+              >
+
+                <div className="flex items-center gap-2">
+
+                  <Tag
+                    className="
+                      h-5
+                      w-5
+                      text-slate-400
+                    "
+                  />
+
+                  <SelectValue />
+
+                </div>
+
+              </SelectTrigger>
+
+              <SelectContent>
+
+                <SelectItem value="all">
+                  Kategori
+                </SelectItem>
+
+                <SelectItem value="plan">
+                  On Plan
+                </SelectItem>
+
+                <SelectItem value="out_plan">
+                  Out Plan
+                </SelectItem>
+
+              </SelectContent>
+
+            </Select>
+
+          </div>
+      
       {isLoading ? (
 
         <div className="space-y-3">
@@ -207,7 +343,33 @@ export default function WorkPlanPage() {
 
         <div className="space-y-4">
 
-          {(plans?.data ?? []).map(
+          {(plans?.data ?? [])
+
+          .filter((plan: StaffWorkProgram) =>
+
+            filterType === 'all'
+              ? plan.scheduled_dates?.includes(today)
+              : true
+
+          )
+
+          .filter((plan: StaffWorkProgram) =>
+
+            filterLocation === 'all'
+              ? true
+              : plan.location_name === filterLocation
+
+          )
+
+          .filter((plan: StaffWorkProgram) =>
+
+            filterCategory === 'all'
+              ? true
+              : plan.category === filterCategory
+
+          )
+
+          .map(
             (plan: StaffWorkProgram) => (
 
             <div
@@ -243,53 +405,147 @@ export default function WorkPlanPage() {
 
                   </div>
 
-                  <h3 className="font-bold text-gray-900">
+                  <h3
+                    className="
+                      text-lg
+                      font-bold
+                      text-gray-900
+                      mt-2
+                    "
+                  >
                     {plan.job?.job}
                   </h3>
 
-                  <div className="flex gap-3 mt-2 text-xs text-gray-500">
+                  <div className="mt-3 space-y-1">
 
-                    <span className="flex items-center gap-1">
-                      <MapPin className="w-3 h-3" />
-                      {plan.location_name}
-                      <p className="text-xs text-gray-400 mt-1">
-                        {plan.sub_location}
+                    <div className="flex items-center gap-2 text-sm text-gray-700">
+                      <MapPin className="w-4 h-4 text-gray-400" />
+                      <span>{plan.location_name}</span>
+                    </div>
+
+                    <p className="text-xs text-gray-500 pl-6">
+                      {plan.sub_location}
+                    </p>
+
+                    {plan.scheduled_dates && (
+
+                      <p
+                        className="
+                          text-xs
+                          text-brand-600
+                          font-medium
+                          pl-6
+                          mt-1
+                        "
+                      >
+                        📅 {plan.scheduled_dates?.join(', ')}
+                        {' '}
+                        {new Date(
+                          plan.year!,
+                          plan.month! - 1
+                        ).toLocaleString(
+                          'id-ID',
+                          { month: 'short' }
+                        )}
                       </p>
-                    </span>
 
-                    {plan.time_range && (
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {plan.time_range}
-                      </span>
                     )}
+
+                    <div className="flex flex-wrap gap-2 mt-3">
+
+                      <span
+                        className={cn(
+                          `
+                          px-3
+                          py-1
+                          rounded-full
+                          text-xs
+                          font-medium
+                          `,
+                          plan.category === 'plan'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-orange-100 text-orange-700'
+                        )}
+                      >
+                        {plan.category === 'plan'
+                          ? 'On Plan'
+                          : 'Out Plan'}
+                      </span>
+
+                      {plan.time_range && (
+
+                        <span
+                          className="
+                            px-3
+                            py-1
+                            rounded-full
+                            bg-gray-100
+                            text-gray-700
+                            text-xs
+                            font-medium
+                          "
+                        >
+                          🕒 {plan.time_range}
+                        </span>
+
+                      )}
+
+                    </div>
 
                   </div>
 
-                  <p className="text-sm text-gray-500 mt-2">
-                    {plan.category === 'plan'
-                      ? 'Program Kerja'
-                      : 'Out Plan'}
-                  </p>
+                  
 
                 </div>
 
               </div>
 
-              <div className="mt-4">
+              <div className="mt-4 flex justify-end">
 
-                <div className="h-2 bg-gray-100 rounded-full">
+                {plan.status === 'pending' && (
+                  <span
+                    className="
+                      px-3 py-1
+                      rounded-full
+                      bg-amber-100
+                      text-amber-700
+                      text-xs
+                      font-semibold
+                    "
+                  >
+                    Menunggu Bukti
+                  </span>
+                )}
 
-                  <div
-                    className={cn(
-                      'h-full rounded-full',
-                      plan.status === 'done'
-                      ? 'bg-green-500 w-full'
-                      : 'bg-gray-300 w-1/4'
-                    )}
-                  />
+                {plan.status === 'done' && (
+                  <span
+                    className="
+                      px-3 py-1
+                      rounded-full
+                      bg-green-100
+                      text-green-700
+                      text-xs
+                      font-semibold
+                    "
+                  >
+                    Pekerjaan Selesai
+                  </span>
+                )}
 
-                </div>
+                {plan.status === 'late' && (
+                  <span
+                    className="
+                      px-3 py-1
+                      rounded-full
+                      bg-red-100
+                      text-red-700
+                      text-xs
+                      font-semibold
+                    "
+                  >
+                    Terlambat
+                  </span>
+                )}
 
               </div>
 
@@ -373,34 +629,93 @@ export default function WorkPlanPage() {
 
             <h3
               className="
-                text-lg
+                text-xl
                 font-bold
-                mb-2
+                text-gray-900
               "
             >
               Upload Bukti Pekerjaan
             </h3>
 
-            <p
+            <div
               className="
-                text-sm
-                text-gray-500
-                mb-4
+                mb-5
+                rounded-2xl
+                bg-gray-50
+                border
+                border-gray-100
+                p-4
               "
             >
-              {selectedPlan.job?.job}
-            </p>
 
+              <h4
+                className="
+                  font-semibold
+                  text-gray-900
+                "
+              >
+                {selectedPlan.job?.job}
+              </h4>
+
+              <div
+                className="
+                  mt-3
+                  space-y-2
+                  text-sm
+                  text-gray-600
+                "
+              >
+
+                <div className="flex items-center gap-2">
+
+                  <MapPin className="w-4 h-4" />
+
+                  <span>
+                    {selectedPlan.location_name}
+                  </span>
+
+                </div>
+
+                <div className="flex items-center gap-2">
+
+                  <Calendar className="w-4 h-4" />
+
+                  <span>
+                    {selectedPlan.time_range}
+                  </span>
+
+                </div>
+
+              </div>
+
+            </div>
             <div className="space-y-3">
 
-              <Button
-                className="w-full"
+              <div
                 onClick={() =>
                   beforeCameraRef.current?.click()
                 }
+                className="
+                  border-2
+                  border-dashed
+                  border-gray-200
+                  rounded-3xl
+                  p-6
+                  text-center
+                  cursor-pointer
+                  transition-all
+                  hover:border-brand-500
+                  hover:bg-brand-50
+                "
               >
-                📸 Foto Sebelum
-              </Button>
+                <p className="font-semibold text-gray-800">
+                  Foto Sebelum
+                </p>
+
+                <p className="text-xs text-gray-500 mt-1">
+                  Dokumentasikan kondisi sebelum pekerjaan dimulai
+                </p>
+              </div>
 
               <input
                 ref={beforeCameraRef}
@@ -422,18 +737,38 @@ export default function WorkPlanPage() {
 
               {beforeImage && (
 
-                <img
-                  src={URL.createObjectURL(
-                    beforeImage
-                  )}
-                  alt=""
-                  className="
-                    w-full
-                    h-40
-                    object-cover
-                    rounded-2xl
-                  "
-                />
+                <div>
+
+                  <p
+                    className="
+                      text-xs
+                      font-medium
+                      text-gray-500
+                      mb-2
+                    "
+                  >
+                    Preview Foto Sebelum
+                  </p>
+
+                  <img
+                    onClick={() =>
+                      setPreviewImage(
+                        URL.createObjectURL(beforeImage)
+                      )
+                    }
+                    src={URL.createObjectURL(
+                      beforeImage
+                    )}
+                    alt=""
+                    className="
+                      w-full
+                      h-40
+                      object-cover
+                      rounded-2xl
+                    "
+                  />
+
+                </div>
 
               )}
 
@@ -441,14 +776,31 @@ export default function WorkPlanPage() {
 
             <div className="space-y-3 mt-4">
 
-              <Button
-                className="w-full bg-green-600"
+              <div
                 onClick={() =>
                   afterCameraRef.current?.click()
                 }
+                className="
+                  border-2
+                  border-dashed
+                  border-green-200
+                  rounded-3xl
+                  p-6
+                  text-center
+                  cursor-pointer
+                  transition-all
+                  hover:border-green-500
+                  hover:bg-green-50
+                "
               >
-                📷 Foto Sesudah
-              </Button>
+                <p className="font-semibold text-gray-800">
+                  Foto Sesudah
+                </p>
+
+                <p className="text-xs text-gray-500 mt-1">
+                  Dokumentasikan hasil setelah pekerjaan selesai
+                </p>
+              </div>
 
               <input
                 ref={afterCameraRef}
@@ -470,18 +822,38 @@ export default function WorkPlanPage() {
 
               {afterImage && (
 
-                <img
-                  src={URL.createObjectURL(
-                    afterImage
-                  )}
-                  alt=""
-                  className="
-                    w-full
-                    h-40
-                    object-cover
-                    rounded-2xl
-                  "
-                />
+                <div>
+
+                  <p
+                    className="
+                      text-xs
+                      font-medium
+                      text-gray-500
+                      mb-2
+                    "
+                  >
+                    Preview Foto Sesudah
+                  </p>
+
+                  <img
+                    onClick={() =>
+                      setPreviewImage(
+                        URL.createObjectURL(afterImage)
+                      )
+                    }
+                    src={URL.createObjectURL(
+                      afterImage
+                    )}
+                    alt=""
+                    className="
+                      w-full
+                      h-40
+                      object-cover
+                      rounded-2xl
+                    "
+                  />
+
+                </div>
 
               )}
 
@@ -511,16 +883,68 @@ export default function WorkPlanPage() {
                   !afterImage ||
                   uploadMut.isPending
                 }
-                onClick={() =>
+                onClick={() => {
+
+                  const confirmed = window.confirm(
+                    'Pastikan foto sebelum dan sesudah sudah benar?'
+                  )
+
+                  if (!confirmed) return
+
                   uploadMut.mutate()
-                }
+
+                }}
               >
-                Simpan
+                Selesaikan Pekerjaan
               </Button>
 
             </div>
 
           </div>
+
+        </div>
+
+      )}
+
+      {previewImage && (
+
+        <div
+          className="
+            fixed
+            inset-0
+            bg-black/95
+            z-[999]
+            flex
+            items-center
+            justify-center
+            p-4
+          "
+          onClick={() =>
+            setPreviewImage(null)
+          }
+        >
+
+          <button
+            className="
+              absolute
+              top-5
+              right-5
+              text-white
+              text-3xl
+            "
+          >
+            ×
+          </button>
+
+          <img
+            src={previewImage}
+            alt=""
+            className="
+              max-w-[95vw]
+              max-h-[90vh]
+              object-contain
+            "
+          />
 
         </div>
 

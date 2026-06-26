@@ -35,6 +35,8 @@ export default function LoginPage() {
 
       setAuth(res.user, res.token)
 
+      console.log(useAuthStore.getState())
+
       toast.success(`Selamat datang, ${res.user.name}!`)
 
       if (res.user.role === 'admin') {
