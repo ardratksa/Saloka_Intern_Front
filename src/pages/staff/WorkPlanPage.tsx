@@ -23,7 +23,6 @@ import {
   Wrench,
   MapPin,
   Calendar,
-  CheckCircle2,
 } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
@@ -477,13 +476,21 @@ const statusBadge=(
 
           {(plans ?? [])
 
-          .filter((plan: StaffWorkProgram) =>
+          .filter((plan: StaffWorkProgram) => {
 
-            filterType === 'all'
-              ? plan.scheduled_dates?.includes(today)
-              : true
+              const isToday =
+                  plan.scheduled_dates?.includes(today)
 
-          )
+              if (filterType === "all") {
+                  return isToday
+              }
+
+              return (
+                  plan.plan === filterType &&
+                  isToday
+              )
+
+          })
 
           .filter((plan: StaffWorkProgram) =>
 
@@ -749,21 +756,25 @@ const statusBadge=(
 
       {selectedPlan && (
 
-        <div
-          className="
-            fixed inset-0
-            bg-black/60
-            z-50
-            flex items-end
-          "
-        >
+       <div
+        className="
+          fixed
+          inset-0
+          z-50
+          bg-black/60
+          overflow-y-auto
+        "
+      >
 
           <div
             className="
               bg-white
               rounded-t-3xl
-              p-5
               w-full
+              max-h-[92vh]
+              overflow-y-auto
+              p-5
+              pb-8
             "
           >
 

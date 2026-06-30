@@ -280,8 +280,6 @@ export default function ChecklistPage() {
   const handleSaveNote = async () => {
     if (sendingIssue) return
 
-    setSendingIssue(true)
-
     if (
       !openItem ||
       !activeLocation ||
@@ -343,6 +341,10 @@ export default function ChecklistPage() {
 }
 )
     } catch (err) {
+
+      setSendingIssue(true)
+
+      
 
         toast.dismiss("issue-loading")
 
