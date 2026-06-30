@@ -86,6 +86,7 @@ export interface Issue {
   description: string | null
   location_id: number
   location: string
+  job_name?: string
   reported_by: string
   date: string
   status: 'open' | 'resolved'
@@ -161,9 +162,10 @@ export interface WorkProgram {
   scheduled_dates: number[]
 
   status:
-    | 'pending'
-    | 'overdue'
-    | 'done'
+  | 'pending'
+  | 'progress'
+  | 'done'
+  | 'late'
 
   completed_at?: string
 
@@ -216,6 +218,8 @@ export interface WeeklyReport {
     note: string | null
 
     total_docs: number
+
+    photos: ChecklistDoc[]
   }>
 
   issues: Issue[]

@@ -60,7 +60,7 @@ export default function CleaningTable({
         }
 
         return (
-          item.location_type_id === 7
+          item.location_type_id === 3
         )
       }
     )

@@ -11,16 +11,17 @@ import { useAuthStore } from '@/store/authStore'
 import toast from 'react-hot-toast'
 
 import {
-  ChevronLeft,
   Camera,
+  House,
 } from 'lucide-react'
 
 export default function QrScanPage() {
   const navigate = useNavigate()
-  const { setActiveLocation, activeLocation } = useAuthStore()
+  const { setActiveLocation } = useAuthStore()
   const [selectedTypeId, setSelectedTypeId] = useState('')
   const [selectedLocId, setSelectedLocId] = useState('')
   const [showManual, setShowManual] = useState(false)
+  const [showExitModal, setShowExitModal] = useState(false)
 
   const scannerRef = useRef<Html5Qrcode | null>(null)
   const scanningRef = useRef(false)
@@ -144,23 +145,39 @@ export default function QrScanPage() {
     <div className="min-h-dvh bg-gray-50 flex flex-col max-w-md mx-auto">
       {/* Header */}
       <div className="bg-brand-600 pt-12 pb-6 px-5">
-        <div className="flex items-center gap-3 mb-4">
-          {activeLocation && (
-            <button
-              onClick={() => navigate(-1)}
-              className="w-8 h-8 rounded-full bg-white/20 flex items-center
-                         justify-center text-white"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-          )}
+        <div className="flex items-center justify-between">
+
           <div>
-            <h1 className="text-white text-xl font-bold">Scan QR</h1>
-            <p className="text-white/70 text-xs mt-0.5">
-              Arahkan kamera ke QR lokasi
-            </p>
+
+              <h1 className="text-white text-xl font-bold">
+                  Scan QR Lokasi
+              </h1>
+
+              <p className="text-white/70 text-xs mt-1">
+                  Arahkan kamera ke QR lokasi
+              </p>
+
           </div>
-        </div>
+
+          <button
+              onClick={() => setShowExitModal(true)}
+              className="
+                  w-11
+                  h-11
+                  rounded-xl
+                  bg-white/15
+                  border
+                  border-white/20
+                  flex
+                  items-center
+                  justify-center
+                  active:scale-95
+              "
+          >
+              <House className="w-5 h-5 text-white"/>
+          </button>
+
+      </div>
 
         
       </div>
@@ -314,6 +331,97 @@ export default function QrScanPage() {
           </div>
 
       </div>
+      {showExitModal && (
+        <div
+          className="
+            fixed inset-0
+            bg-black/60
+            backdrop-blur-sm
+            z-50
+            flex
+            items-center
+            justify-center
+            p-4
+          "
+        >
+          <div
+            className="
+              bg-white
+              rounded-3xl
+              p-6
+              w-full
+              max-w-sm
+            "
+          >
+            <div className="text-center">
+
+              <div
+                className="
+                  w-16
+                  h-16
+                  rounded-full
+                  bg-brand-100
+                  flex
+                  items-center
+                  justify-center
+                  mx-auto
+                  mb-4
+                "
+              >
+                <House className="w-8 h-8 text-brand-600" />
+              </div>
+
+              <h3 className="text-xl font-bold">
+                Kembali ke Menu?
+              </h3>
+
+              <p className="text-sm text-gray-500 mt-2">
+                Anda akan keluar dari halaman Scan QR dan kembali ke menu utama.
+              </p>
+
+            </div>
+
+            <div className="flex gap-3 mt-6">
+
+              <button
+                onClick={() => setShowExitModal(false)}
+                className="
+                  flex-1
+                  h-12
+                  rounded-xl
+                  border
+                  border-gray-300
+                  font-semibold
+                "
+              >
+                Tidak
+              </button>
+
+              <button
+                onClick={() => {
+
+                  setActiveLocation(null)
+
+                  navigate("/dashboard")
+
+                }}
+                className="
+                  flex-1
+                  h-12
+                  rounded-xl
+                  bg-brand-600
+                  text-white
+                  font-semibold
+                "
+              >
+                Ya
+              </button>
+
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   )
 }

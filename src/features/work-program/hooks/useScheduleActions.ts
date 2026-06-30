@@ -81,11 +81,15 @@ interface Props {
   setEndTime: (
     value: string
 ) => void
+
+  masterJobs: any[]
 }
 
 export function useScheduleActions({
 
   workPrograms,
+
+  masterJobs,
 
   category,
 
@@ -246,9 +250,13 @@ export function useScheduleActions({
       return
     }
 
+    const selectedJob = masterJobs.find(
+      (job) => job.id === selectedJobId
+    )
+
     const payload = {
 
-      location_type_id: 7,
+      location_type_id: selectedJob?.location_type_id,
 
       area_id: 1,
 

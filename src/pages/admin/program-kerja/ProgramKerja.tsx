@@ -227,6 +227,8 @@ export default function ProgramKerjaPage() {
 
     workPrograms: allWorkPrograms,
 
+    masterJobs,
+
     category: 'plan',
 
     editingItem,

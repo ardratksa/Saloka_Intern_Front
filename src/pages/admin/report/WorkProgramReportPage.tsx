@@ -65,6 +65,7 @@ export default function WorkProgramReportPage() {
     queryKey: ['work-program-report'],
     queryFn: getWorkProgramReport,
   })
+  
 
   const columns = [
 
@@ -134,48 +135,110 @@ export default function WorkProgramReportPage() {
 
       render: (row: any) => (
 
-        <span
-          className={cn(
-            'px-3 py-1 rounded-full text-xs font-medium',
+      <span
+      className={cn(
+      'px-3 py-1 rounded-full text-xs font-medium',
 
-            row.status === 'done'
-              ? 'bg-green-100 text-green-700'
+      row.status === 'pending'
+      ? 'bg-yellow-100 text-yellow-700'
 
-              : row.status === 'late'
-              ? 'bg-red-100 text-red-700'
+      : row.status === 'progress'
+      ? 'bg-blue-100 text-blue-700'
 
-              : 'bg-yellow-100 text-yellow-700'
-          )}
-        >
-          {row.status}
-        </span>
+      : row.status === 'done'
+      ? 'bg-green-100 text-green-700'
 
-      ),
+      : 'bg-red-100 text-red-700'
+      )}
+      >
+
+      {row.status === 'pending' && 'Pending'}
+
+      {row.status === 'progress' && 'Progress'}
+
+      {row.status === 'done' && 'Done'}
+
+      {row.status === 'late' && 'Late'}
+
+      </span>
+
+      )
     },
 
     {
       key: 'evidence',
       label: 'Evidence',
 
-      render: (row: any) => (
+      render: (row: any) => {
 
-        <span
-          className={cn(
-            'font-medium',
+        const evidence = row.evidences?.[0]
 
-            row.has_evidence
-              ? 'text-green-600'
-              : 'text-red-500'
-          )}
-        >
-          {row.has_evidence
-            ? 'Ada'
-            : 'Belum'}
-        </span>
+        if (row.status === 'pending') {
 
-      ),
+          return (
+            <span className="font-medium text-yellow-600">
+              Belum Mulai
+            </span>
+          )
+
+        }
+
+        if (row.status === 'progress') {
+
+          return (
+            <div className="flex flex-col">
+
+              <span className="font-medium text-blue-600">
+                Before
+              </span>
+
+              {evidence?.before_image && (
+                <span className="text-xs text-gray-500">
+                  1 Foto
+                </span>
+              )}
+
+            </div>
+          )
+
+        }
+
+        if (row.status === 'done') {
+
+          return (
+            <div className="flex flex-col">
+
+              <span className="font-medium text-green-600">
+                Before + After
+              </span>
+
+              <span className="text-xs text-gray-500">
+                Lengkap
+              </span>
+
+            </div>
+          )
+
+        }
+
+        return (
+          <div className="flex flex-col">
+
+            <span className="font-medium text-red-600">
+              Terlambat
+            </span>
+
+            {evidence?.before_image && (
+              <span className="text-xs text-gray-500">
+                Evidence Ada
+              </span>
+            )}
+
+          </div>
+        )
+
+      },
     },
-
     {
       key: 'action',
       label: 'Aksi',
@@ -486,17 +549,25 @@ export default function WorkProgramReportPage() {
 
                     <SelectContent>
 
-                        <SelectItem value="all">
-                        Semua Status
-                        </SelectItem>
+                    <SelectItem value="all">
+                    Semua Status
+                    </SelectItem>
 
-                        <SelectItem value="done">
-                        Done
-                        </SelectItem>
+                    <SelectItem value="pending">
+                    Pending
+                    </SelectItem>
 
-                        <SelectItem value="late">
-                        Late
-                        </SelectItem>
+                    <SelectItem value="progress">
+                    Progress
+                    </SelectItem>
+
+                    <SelectItem value="done">
+                    Done
+                    </SelectItem>
+
+                    <SelectItem value="late">
+                    Late
+                    </SelectItem>
 
                     </SelectContent>
                     </Select>
@@ -695,19 +766,12 @@ export default function WorkProgramReportPage() {
                 <p>{selectedData.status}</p>
               </div>
 
-              <div>
+              {/* <div>
                 <b>Checker</b>
                 <p>
-                  {selectedData.checker || '-'}
+                  {selectedData.user || '-'}
                 </p>
-              </div>
-
-              <div>
-                <b>Remark</b>
-                <p>
-                  {selectedData.remark || '-'}
-                </p>
-              </div>
+              </div> */}
 
             </div>
 
@@ -855,30 +919,41 @@ export default function WorkProgramReportPage() {
 
                             </div>
 
-                            <div className="mt-4">
+                            <div className="grid grid-cols-2 gap-4 mt-4">
 
-                            <p
-                                className="
-                                text-sm
-                                font-medium
-                                mb-1
-                                "
-                            >
-                                Remark
-                            </p>
+                          <div>
 
-                            <div
-                                className="
-                                bg-gray-50
-                                rounded-xl
-                                p-3
-                                text-sm
-                                "
-                            >
-                                {evidence.remark || '-'}
-                            </div>
+                          <p className="text-sm font-medium mb-1">
 
-                            </div>
+                          Remark Before
+
+                          </p>
+
+                          <div className="bg-gray-50 rounded-xl p-3 text-sm">
+
+                          {evidence.before_remark || '-'}
+
+                          </div>
+
+                          </div>
+
+                          <div>
+
+                          <p className="text-sm font-medium mb-1">
+
+                          Remark After
+
+                          </p>
+
+                          <div className="bg-gray-50 rounded-xl p-3 text-sm">
+
+                          {evidence.after_remark || '-'}
+
+                          </div>
+
+                          </div>
+
+                          </div>
 
                         </div>
 

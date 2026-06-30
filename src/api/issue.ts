@@ -17,7 +17,7 @@ export const createIssue = async (data: {
   date: string
   type: string
   description?: string
-  images?: File[]
+  before?: File
 }) => {
   const form = new FormData()
   form.append('location_id', String(data.location_id))
@@ -27,8 +27,8 @@ export const createIssue = async (data: {
     form.append('checklist_id', String(data.checklist_id))
   }
   if (data.description) form.append('description', data.description)
-  if (data.images) {
-    data.images.forEach((img) => form.append('images[]', img))
+  if (data.before) {
+    form.append('before', data.before)
   }
   const res = await api.post('/issues', form, {
     headers: { 'Content-Type': 'multipart/form-data' },

@@ -32,11 +32,19 @@ export const uploadBeforeEvidence =
       remark
     )
 
-    const res =
-      await api.post(
-        `/work-programs/${workProgramId}/before`,
-        form
-      )
+    const res = await api.post(
+
+      `/work-programs/${workProgramId}/before`,
+
+      form,
+
+      {
+          headers:{
+              "Content-Type":"multipart/form-data"
+          }
+      }
+
+  )
 
     return res.data
   }
@@ -67,11 +75,19 @@ export const uploadAfterEvidence =
       remark
     )
 
-    const res =
-      await api.post(
-        `/work-programs/${workProgramId}/after`,
-        form
-      )
+    const res = await api.post(
+
+      `/work-programs/${workProgramId}/after`,
+
+      form,
+
+      {
+          headers:{
+              "Content-Type":"multipart/form-data"
+          }
+      }
+
+  )
 
     return res.data
   }

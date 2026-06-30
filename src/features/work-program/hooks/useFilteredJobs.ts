@@ -29,7 +29,7 @@ export function useFilteredJobs(
       */
 
       return (
-        job.location_type_id === 7
+        job.location_type_id === 3
       )
     }
   )

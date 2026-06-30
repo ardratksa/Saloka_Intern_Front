@@ -9,6 +9,8 @@ import {
   Download,
   CalendarRange,
    SlidersHorizontal,
+   Eye,
+   X,
 } from 'lucide-react'
 import {
   Select,
@@ -58,6 +60,16 @@ export default function AdminReport() {
     openFilter,
     setOpenFilter,
   ] = useState(false)
+
+  const [selectedPhotos, setSelectedPhotos] = useState<
+  {
+    id: number
+    image_url: string
+    note: string | null
+  }[]
+>([])
+
+const [openPreview, setOpenPreview] = useState(false)
 
   const {
     data: report,
@@ -111,6 +123,44 @@ export default function AdminReport() {
   {
     key: 'status',
     label: 'Status',
+  },
+
+  {
+    key: 'preview',
+    label: 'Preview',
+
+    render: (row: any) =>
+
+      row.photos?.length ? (
+
+        <button
+          onClick={() => {
+            setSelectedPhotos(row.photos)
+            setOpenPreview(true)
+          }}
+          className="
+            inline-flex
+            items-center
+            gap-2
+            px-3
+            py-2
+            rounded-lg
+            bg-brand-50
+            text-brand-700
+            hover:bg-brand-100
+          "
+        >
+          <Eye className="w-4 h-4" />
+          Preview
+        </button>
+
+      ) : (
+
+        <span className="text-gray-400">
+          -
+        </span>
+
+      ),
   },
 
 ]
@@ -775,6 +825,136 @@ return (
             </div>
 
           </div>
+
+        )}
+
+        {openPreview && (
+
+        <div
+          className="
+            fixed
+            inset-0
+            bg-black/40
+            z-[9999]
+            flex
+            items-center
+            justify-center
+            p-6
+          "
+        >
+
+        <div
+          className="
+            bg-white
+            rounded-3xl
+            w-full
+            max-w-3xl
+            max-h-[90vh]
+            overflow-y-auto
+            shadow-xl
+          "
+        >
+
+        <div className="flex justify-between items-center p-8">
+
+        <h2 className="text-2xl font-bold">
+        Preview Dokumentasi Checklist
+        </h2>
+
+        <button
+          onClick={() => setOpenPreview(false)}
+        >
+        <X className="w-7 h-7 text-gray-500 hover:text-black"/>
+        </button>
+
+        </div>
+
+        <div className="px-8 pb-8">
+
+        {selectedPhotos.length === 0 ? (
+
+        <div className="text-center py-20 text-gray-400">
+        Tidak ada dokumentasi.
+        </div>
+
+        ) : (
+
+        <>
+
+        <p className="font-semibold text-lg mb-5">
+        Dokumentasi
+        </p>
+
+        <div className="grid grid-cols-2 gap-5">
+
+        {selectedPhotos.map((photo) => (
+
+        <button
+            key={photo.id}
+            type="button"
+            onClick={() =>
+              window.open(photo.image_url,"_blank")
+            }
+            className="
+              rounded-2xl
+              overflow-hidden
+              border
+              hover:shadow-lg
+              transition
+            "
+        >
+
+        <img
+            src={photo.image_url}
+            className="
+              w-full
+              h-72
+              object-cover
+            "
+        />
+
+        </button>
+
+        ))}
+
+        </div>
+
+        <p className="text-center text-sm text-gray-500 mt-5">
+        Klik gambar untuk memperbesar
+        </p>
+
+        </>
+
+        )}
+
+        <div className="mt-8">
+
+        <button
+
+        onClick={() => setOpenPreview(false)}
+
+        className="
+        w-full
+        border
+        rounded-xl
+        py-3
+        font-medium
+        hover:bg-gray-50
+        "
+
+        >
+
+        Tutup
+
+        </button>
+
+        </div>
+
+        </div>
+
+        </div>
+
+        </div>
 
         )}
     </div>

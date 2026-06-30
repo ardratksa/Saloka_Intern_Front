@@ -228,6 +228,8 @@ export default function OutPlanPage() {
 
     workPrograms: allWorkPrograms,
 
+    masterJobs,
+
     category: 'out_plan',
 
     editingItem,

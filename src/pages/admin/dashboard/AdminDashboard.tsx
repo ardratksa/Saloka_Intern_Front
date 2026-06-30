@@ -40,6 +40,8 @@ import {
   CommandList,
 } from '@/components/ui/command'
 
+import { cn } from '@/lib/utils'
+
 type Session = {
   id: number
   date: string
@@ -158,16 +160,26 @@ console.log(issues)
       })
 
   const statusColor = (status: string) => {
-    if (status === 'OK') {
-      return 'text-green-600 bg-green-50 border-green-200'
-    }
+  switch (status.toLowerCase()) {
+    case 'ok':
+    case 'done':
+      return 'bg-green-100 text-green-700 border-green-200'
 
-    if (status === 'Perlu Perbaikan') {
-      return 'text-red-600 bg-red-50 border-red-200'
-    }
+    case 'issue':
+    case 'tidak ok':
+    case 'perlu perbaikan':
+      return 'bg-red-100 text-red-700 border-red-200'
 
-    return 'text-red-600 bg-red-50 border-red-200'
+    case 'open':
+      return 'bg-orange-100 text-orange-700 border-orange-200'
+
+    case 'resolved':
+      return 'bg-green-100 text-green-700 border-green-200'
+
+    default:
+      return 'bg-gray-100 text-gray-700 border-gray-200'
   }
+}
 
   const scoreColor = (score: number) => {
     if (score >= 80) return 'text-green-600'
@@ -216,13 +228,14 @@ console.log(issues)
 }
 
   const sessionIssues = detail
-    ? issues.filter((i: any) => {
-        return (
-          i.location === detail.location &&
-          i.date === detail.date
-        )
-      })
-    : []
+  ? issues.filter((i: any) => {
+      return (
+        i.location === detail.location &&
+        i.date === detail.date &&
+        i.shift === detail.shift
+      )
+    })
+  : []
 
   return (
     <div className="p-6 space-y-5">
@@ -668,7 +681,17 @@ console.log(issues)
               </div>
             ) : (
               <div className="space-y-4">
-                {sessionIssues.map((issue: any) => (
+               {sessionIssues.map((issue: any) => {
+
+                  const beforePhoto = issue.photos?.find(
+                    (p: any) => p.type === "before"
+                  )
+
+                  const afterPhoto = issue.photos?.find(
+                    (p: any) => p.type === "after"
+                  )
+
+                  return (
                   <div
                     key={issue.id}
                     className="
@@ -677,59 +700,182 @@ console.log(issues)
                       p-4
                     "
                   >
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <p className="font-semibold">
-                          {issue.type}
-                        </p>
+                   <div className="flex justify-between items-start">
 
-                        <p className="text-sm text-gray-500">
-                          {issue.location}
-                        </p>
-                      </div>
-
-                      <span
-                        className="
-                          px-3 py-1
-                          rounded-full
-                          text-xs
-                          bg-red-100
-                          text-red-600
-                        "
-                      >
-                        {issue.status}
-                      </span>
-                    </div>
-
-                    <p className="mb-3">
-                      {issue.description}
+                  <div>
+                    <p className="font-semibold text-lg">
+                      {issue.type}
                     </p>
 
-                    {issue.photos?.length > 0 && (
-                      <div className="grid grid-cols-3 gap-2">
-                        {issue.photos.map((p: any) => (
+                    <p className="text-sm text-gray-500">
+                      {issue.location}
+                    </p>
+                  </div>
+
+                  <span
+                    className={cn(
+                      "px-3 py-1 rounded-full text-xs font-semibold",
+                      issue.status === "resolved"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-orange-100 text-orange-700"
+                    )}
+                  >
+                    {issue.status === "resolved"
+                      ? "Resolved"
+                      : "Open"}
+                  </span>
+
+                </div>
+
+                {issue.job_name && (
+
+                  <div className="mt-4">
+
+                    <p className="text-sm font-medium text-gray-500 mb-2">
+                      Checklist Bermasalah
+                    </p>
+
+                    <div
+                      className="
+                        flex
+                        items-center
+                        gap-2
+                        rounded-xl
+                        bg-red-50
+                        border
+                        border-red-100
+                        px-4
+                        py-3
+                      "
+                    >
+                      <span className="text-red-500 text-lg">
+                        ⚠
+                      </span>
+
+                      <span className="font-medium text-red-700">
+                        {issue.job_name}
+                      </span>
+
+                    </div>
+
+                  </div>
+
+                )}
+
+                <div className="mt-4">
+
+                  <p className="text-sm font-medium text-gray-500 mb-1">
+                    Keterangan
+                  </p>
+
+                  <p>
+                    {issue.description}
+                  </p>
+
+                </div>
+
+                    <div className="mt-4">
+
+                    <h4 className="font-semibold mb-3">
+                      Evidence
+                    </h4>
+
+                    <div className="grid grid-cols-2 gap-4">
+
+                      {/* BEFORE */}
+
+                      <div>
+
+                        <p className="text-sm font-semibold mb-2">
+                          Before
+                        </p>
+
+                        {beforePhoto ? (
+
                           <img
-                            key={p.id}
-                            src={p.image_url}
-                            alt=""
+                            src={beforePhoto.image_url}
                             onClick={() =>
-                              setPreviewImage(p.image_url)
+                              setPreviewImage(beforePhoto.image_url)
                             }
                             className="
-                              h-28
                               w-full
+                              h-48
                               object-cover
-                              rounded-lg
+                              rounded-xl
+                              border
                               cursor-pointer
-                              hover:opacity-80
-                              transition
                             "
                           />
-                        ))}
+
+                        ) : (
+
+                          <div className="
+                            h-48
+                            border-2
+                            border-dashed
+                            rounded-xl
+                            flex
+                            items-center
+                            justify-center
+                            text-gray-400
+                          ">
+                            Tidak ada foto
+                          </div>
+
+                        )}
+
                       </div>
-                    )}
+
+                      {/* AFTER */}
+
+                      <div>
+
+                        <p className="text-sm font-semibold mb-2">
+                          After
+                        </p>
+
+                        {afterPhoto ? (
+
+                          <img
+                            src={afterPhoto.image_url}
+                            onClick={() =>
+                              setPreviewImage(afterPhoto.image_url)
+                            }
+                            className="
+                              w-full
+                              h-48
+                              object-cover
+                              rounded-xl
+                              border
+                              cursor-pointer
+                            "
+                          />
+
+                        ) : (
+
+                          <div className="
+                            h-48
+                            border-2
+                            border-dashed
+                            rounded-xl
+                            flex
+                            items-center
+                            justify-center
+                            text-gray-400
+                          ">
+                            Belum diselesaikan
+                          </div>
+
+                        )}
+
+                      </div>
+
+                    </div>
+
                   </div>
-                ))}
+                  </div>
+                    )
+                })}
               </div>
             )}
           </div>

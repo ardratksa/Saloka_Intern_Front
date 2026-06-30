@@ -30,7 +30,7 @@ const statusLabel: Record<string, string> = {
 }
 
 const statusClass: Record<string, string> = {
-  open: 'bg-amber-100 text-amber-700',
+  open: 'bg-orange-100 text-orange-700',
   resolved: 'bg-green-100 text-green-700',
 }
 

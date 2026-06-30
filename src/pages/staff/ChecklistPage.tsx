@@ -48,6 +48,8 @@ export default function ChecklistPage() {
   useState(false)
   const [showExitModal, setShowExitModal] =
     useState(false)
+  const [sendingIssue, setSendingIssue] = useState(false)
+  const [showConfirmIssue, setShowConfirmIssue] = useState(false)
 
   const { data: activePeriod } = useQuery({
     queryKey: ['active-period'],
@@ -96,12 +98,93 @@ export default function ChecklistPage() {
 
   const updateMut = useMutation({
     mutationFn: updateChecklist,
-    onSuccess:  () => {
-      queryClient.invalidateQueries({
-        queryKey: ['checklist', activeLocation?.id, selectedPeriodId, today],
+
+    onMutate: async (variables) => {
+
+      await queryClient.cancelQueries({
+        queryKey: [
+          'checklist',
+          activeLocation?.id,
+          selectedPeriodId,
+          today,
+        ],
       })
+
+      const previousChecklist =
+        queryClient.getQueryData([
+          'checklist',
+          activeLocation?.id,
+          selectedPeriodId,
+          today,
+        ])
+
+      queryClient.setQueryData(
+        [
+          'checklist',
+          activeLocation?.id,
+          selectedPeriodId,
+          today,
+        ],
+        (old: any) => {
+
+          if (!old) return old
+
+          return {
+            ...old,
+
+            items: old.items.map((item: any) =>
+
+              item.job_id === variables.job_id
+                ? {
+                    ...item,
+                    status:
+                      variables.status,
+                  }
+                : item
+            ),
+          }
+
+        }
+      )
+
+      return {
+        previousChecklist,
+      }
+
     },
-    onError: () => toast.error('Gagal update'),
+
+    onError: (_, __, context) => {
+
+      if (context?.previousChecklist) {
+
+        queryClient.setQueryData(
+          [
+            'checklist',
+            activeLocation?.id,
+            selectedPeriodId,
+            today,
+          ],
+          context.previousChecklist
+        )
+
+      }
+
+      toast.error("Gagal update")
+
+    },
+
+    onSettled: () => {
+
+      queryClient.invalidateQueries({
+        queryKey: [
+          'checklist',
+          activeLocation?.id,
+          selectedPeriodId,
+          today,
+        ],
+      })
+
+    },
   })
 
   const createIssueMut = useMutation({
@@ -195,6 +278,10 @@ export default function ChecklistPage() {
   }
 
   const handleSaveNote = async () => {
+    if (sendingIssue) return
+
+    setSendingIssue(true)
+
     if (
       !openItem ||
       !activeLocation ||
@@ -221,23 +308,49 @@ export default function ChecklistPage() {
         note: noteVal,
       })
 
-      createIssueMut.mutate({
-        checklist_id: checklistResult.data.id,
+      createIssueMut.mutate(
+{
+    checklist_id: checklistResult.data.id,
 
-        location_id: activeLocation.id,
+    location_id: activeLocation.id,
 
-        date: today,
+    date: today,
 
-        type: issueType,
+    type: issueType,
 
-        description: noteVal,
+    description: noteVal,
 
-        images: [photoFile],
-      })
+    before: photoFile,
+},
+{
+    onSuccess: () => {
+
+        toast.success("Issue berhasil dikirim")
+
+        setSendingIssue(false)
+
+    },
+
+    onError: () => {
+
+        toast.dismiss("issue-loading")
+
+        toast.error("Gagal mengirim issue")
+
+        setSendingIssue(false)
+
+    }
+}
+)
     } catch (err) {
-      console.error(err)
 
-      toast.error('Gagal membuat issue')
+        toast.dismiss("issue-loading")
+
+        setSendingIssue(false)
+
+        console.error(err)
+
+        toast.error("Gagal membuat issue")
     }
   }
 
@@ -439,9 +552,8 @@ export default function ChecklistPage() {
                 <div className="flex items-center gap-3 px-4 py-3">
                   {/* Checkbox */}
                   <button
-                    onClick={() => handleToggle(item)}
-                    disabled={updateMut.isPending}
                     className="shrink-0"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     {item.status === 'done' ? (
                       <CheckCircle2 className="w-6 h-6 text-green-500" />
@@ -878,6 +990,53 @@ export default function ChecklistPage() {
 
         )}
 
+        {showConfirmIssue && (
+
+          <div className="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center">
+
+              <div className="bg-white rounded-3xl p-6 w-[90%] max-w-sm">
+
+                  <div className="w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center mx-auto">
+
+                      <AlertTriangle className="w-7 h-7 text-orange-600"/>
+
+                  </div>
+
+                  <h2 className="text-xl font-bold text-center mt-4">
+                      Konfirmasi
+                  </h2>
+
+                  <p className="text-sm text-gray-500 text-center mt-2">
+                      Apakah Anda yakin ingin mengirim issue ini?
+                  </p>
+
+                  <div className="flex gap-3 mt-6">
+
+                      <button
+                          onClick={() => setShowConfirmIssue(false)}
+                          className="flex-1 h-11 rounded-xl border"
+                      >
+                          Tidak
+                      </button>
+
+                      <button
+                          onClick={()=>{
+                              setShowConfirmIssue(false)
+                              handleSaveNote()
+                          }}
+                          className="flex-1 h-11 rounded-xl bg-red-600 text-white"
+                      >
+                          Ya, Kirim
+                      </button>
+
+                  </div>
+
+              </div>
+
+          </div>
+
+          )}
+
       {/* Modal Issue */}
         {showNoteModal && (
           <div
@@ -1134,8 +1293,8 @@ export default function ChecklistPage() {
                   </button>
 
                   <button
-                    onClick={handleSaveNote}
-                    disabled={createIssueMut.isPending}
+                    onClick={() => setShowConfirmIssue(true)}
+                    disabled={sendingIssue}
                     className="
                       flex-1
                       h-12
@@ -1149,7 +1308,7 @@ export default function ChecklistPage() {
                       gap-2
                     "
                   >
-                    {createIssueMut.isPending && (
+                    {sendingIssue && (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     )}
 
@@ -1160,6 +1319,31 @@ export default function ChecklistPage() {
               </div>
             </div>
           </div>
+)}
+          {sendingIssue && (
+
+<div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[70] flex items-center justify-center">
+
+    <div className="bg-white rounded-3xl p-8 w-72 text-center shadow-xl">
+
+        <Loader2 className="w-12 h-12 animate-spin text-brand-600 mx-auto"/>
+
+        <h3 className="font-bold text-lg mt-5">
+            Loading...
+        </h3>
+
+        <p className="text-gray-500 mt-2">
+            Please wait
+        </p>
+
+        <p className="text-sm text-gray-400 mt-1">
+            Sedang mengirim issue
+        </p>
+
+    </div>
+
+</div>
+
 )}
     </div>
   )

@@ -1,9 +1,10 @@
 import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  getWorkPrograms,
-  uploadEvidence,
-} from '@/api/workProgram'
+  getStaffPrograms,
+  uploadBeforeEvidence,
+  uploadAfterEvidence,
+} from '@/api/workProgramStaff'
 
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -38,7 +39,21 @@ type StaffWorkProgram = {
 
   time_range?: string
 
-  status: 'pending' | 'done' | 'late'
+  status:
+  | 'pending'
+  | 'progress'
+  | 'done'
+  | 'late'
+
+  evidences?:{
+    id:number
+
+    before_image?:string
+    before_remark?:string
+
+    after_image?:string
+    after_remark?:string
+  }[]
 
   has_evidence: boolean
 
@@ -64,11 +79,22 @@ export default function WorkPlanPage() {
   const [selectedPlan, setSelectedPlan] =
   useState<StaffWorkProgram | null>(null)
 
-  const [beforeImage, setBeforeImage] =
-  useState<File | null>(null)
+  const [mode,setMode]=
+useState<'before'|'after'>(
+'before'
+)
 
-  const [afterImage, setAfterImage] =
-  useState<File | null>(null)
+const [beforeImage,setBeforeImage]=
+useState<File|null>(null)
+
+const [afterImage,setAfterImage]=
+useState<File|null>(null)
+
+const [beforeRemark,setBeforeRemark]=
+useState('')
+
+const [afterRemark,setAfterRemark]=
+useState('')
 
   const beforeCameraRef =
   useRef<HTMLInputElement>(null)
@@ -81,45 +107,151 @@ export default function WorkPlanPage() {
 
   const { data: plans, isLoading } = useQuery({
     queryKey: ['work-plans', filterType],
-    queryFn: () =>
-      getWorkPrograms(
-        filterType !== 'all'
-          ? { plan: filterType }
-          : undefined
-      ),
+    queryFn:getStaffPrograms,
   })
 
 
-  const uploadMut = useMutation({
-    mutationFn: () =>
-     uploadEvidence(
-      selectedPlan!.id,
-      beforeImage!,
-      afterImage!
+  const beforeMutation=
+    useMutation({
+
+    mutationFn:()=>
+
+    uploadBeforeEvidence(
+
+    selectedPlan!.id,
+
+    beforeImage!,
+
+    beforeRemark
+
     ),
 
-    onSuccess: () => {
+    onSuccess:()=>{
 
-      toast.success(
-        'Bukti pekerjaan berhasil disimpan'
-      )
+    toast.success(
+    "Pekerjaan dimulai"
+    )
 
-     queryClient.invalidateQueries()
+    queryClient.invalidateQueries()
 
-      setSelectedPlan(null)
-      setBeforeImage(null)
-      setAfterImage(null)
-    },
+    setSelectedPlan(null)
 
-        onError: (err: any) => {
-  console.log(err)
+    setBeforeImage(null)
 
-  toast.error(
-    err?.response?.data?.message ||
-    'Gagal upload bukti'
-  )
+    setBeforeRemark("")
+
+    }
+
+    })
+
+    const afterMutation=
+useMutation({
+
+mutationFn:()=>{
+
+const evidence=
+
+selectedPlan
+?.evidences?.[0]
+
+if(!evidence){
+
+throw new Error(
+"Evidence tidak ditemukan"
+)
+
 }
-      })
+
+return uploadAfterEvidence(
+
+selectedPlan!.id,
+
+evidence.id,
+
+afterImage!,
+
+afterRemark
+
+)
+
+},
+
+onSuccess:()=>{
+
+toast.success(
+"Pekerjaan selesai"
+)
+
+queryClient.invalidateQueries()
+
+setSelectedPlan(null)
+
+setAfterImage(null)
+
+setAfterRemark("")
+
+}
+
+})
+
+const uploading=
+
+beforeMutation.isPending ||
+
+afterMutation.isPending
+
+const statusBadge=(
+
+  status:string
+
+  )=>{
+
+  switch(status){
+
+  case "pending":
+
+  return{
+
+  label:"Pending",
+
+  color:"bg-amber-100 text-amber-700"
+
+  }
+
+  case "progress":
+
+  return{
+
+  label:"Progress",
+
+  color:"bg-blue-100 text-blue-700"
+
+  }
+
+  case "done":
+
+  return{
+
+  label:"Done",
+
+  color:"bg-green-100 text-green-700"
+
+  }
+
+  default:
+
+  return{
+
+  label:"Late",
+
+  color:"bg-red-100 text-red-700"
+
+  }
+
+  }
+
+  }
+
   
       const today = new Date().getDate()
 
@@ -244,7 +376,7 @@ export default function WorkPlanPage() {
 
                 {[
                   ...new Set(
-                    (plans?.data ?? [])
+                   (plans ?? [])
                       .map(
                         (item: StaffWorkProgram) =>
                           item.location_name
@@ -327,7 +459,7 @@ export default function WorkPlanPage() {
 
         </div>
 
-      ) : (plans?.data?.length ?? 0) === 0 ? (
+      ) : (plans?.length ?? 0) === 0 ? (
 
         <div className="bg-white rounded-3xl border p-10 text-center">
 
@@ -343,7 +475,7 @@ export default function WorkPlanPage() {
 
         <div className="space-y-4">
 
-          {(plans?.data ?? [])
+          {(plans ?? [])
 
           .filter((plan: StaffWorkProgram) =>
 
@@ -500,104 +632,112 @@ export default function WorkPlanPage() {
 
               </div>
 
-              <div className="mt-4 flex justify-end">
+             <div className="mt-4 flex justify-between items-center">
 
-                {plan.status === 'pending' && (
-                  <span
-                    className="
-                      px-3 py-1
-                      rounded-full
-                      bg-amber-100
-                      text-amber-700
-                      text-xs
-                      font-semibold
-                    "
-                  >
-                    Menunggu Bukti
-                  </span>
-                )}
+                <span
+                    className={cn(
+                        "px-3 py-1 rounded-full text-xs font-semibold",
+                        statusBadge(plan.status).color
+                    )}
+                >
+                    {statusBadge(plan.status).label}
+                </span>
 
-                {plan.status === 'done' && (
-                  <span
-                    className="
-                      px-3 py-1
-                      rounded-full
-                      bg-green-100
-                      text-green-700
-                      text-xs
-                      font-semibold
-                    "
-                  >
-                    Pekerjaan Selesai
-                  </span>
-                )}
-
-                {plan.status === 'late' && (
-                  <span
-                    className="
-                      px-3 py-1
-                      rounded-full
-                      bg-red-100
-                      text-red-700
-                      text-xs
-                      font-semibold
-                    "
-                  >
-                    Terlambat
-                  </span>
-                )}
-
-              </div>
+            </div>
 
               <div className="mt-4">
 
-                {plan.status === 'pending' && (
-                  <Button
-                    className="w-full bg-brand-600"
-                    onClick={() => {
-                      setSelectedPlan(plan)
-                    }}
-                  >
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                    Upload Bukti Pekerjaan
-                  </Button>
+                {plan.status==="pending" && (
+
+                    <Button
+
+                        className="w-full"
+
+                        onClick={()=>{
+
+                            setMode("before")
+
+                            setSelectedPlan(plan)
+
+                        }}
+
+                    >
+
+                        Mulai Pekerjaan
+
+                    </Button>
+
                 )}
 
-                {plan.status === 'done' && (
-                  <div
-                    className="
-                      h-11
-                      rounded-2xl
-                      bg-green-100
-                      text-green-700
-                      font-semibold
-                      flex
-                      items-center
-                      justify-center
-                    "
-                  >
-                    ✓ Pekerjaan Selesai
-                  </div>
+                {plan.status==="progress" && (
+
+                    <Button
+
+                        className="w-full bg-blue-600"
+
+                        onClick={()=>{
+
+                            setMode("after")
+
+                            setSelectedPlan(plan)
+
+                        }}
+
+                    >
+
+                        Selesaikan Pekerjaan
+
+                    </Button>
+
                 )}
 
-                {plan.status === 'late' && (
-                  <div
-                    className="
-                      h-11
-                      rounded-2xl
-                      bg-red-100
-                      text-red-700
-                      font-semibold
-                      flex
-                      items-center
-                      justify-center
-                    "
-                  >
-                    ⚠ Terlambat
-                  </div>
+                {plan.status==="done" && (
+
+                    <div
+
+                        className="
+                        h-11
+                        rounded-2xl
+                        bg-green-100
+                        text-green-700
+                        flex
+                        items-center
+                        justify-center
+                        font-semibold
+                        "
+
+                    >
+
+                        ✓ Selesai
+
+                    </div>
+
                 )}
 
-              </div>
+                {plan.status==="late" && (
+
+                    <div
+
+                        className="
+                        h-11
+                        rounded-2xl
+                        bg-red-100
+                        text-red-700
+                        flex
+                        items-center
+                        justify-center
+                        font-semibold
+                        "
+
+                    >
+
+                        Terlambat
+
+                    </div>
+
+                )}
+
+            </div>
 
             </div>
 
@@ -627,15 +767,15 @@ export default function WorkPlanPage() {
             "
           >
 
-            <h3
-              className="
-                text-xl
-                font-bold
-                text-gray-900
-              "
-            >
-              Upload Bukti Pekerjaan
-            </h3>
+            <h3 className="text-xl font-bold">
+
+              {mode==="before"
+
+                  ? "Mulai Pekerjaan"
+
+                  : "Selesaikan Pekerjaan"}
+
+          </h3>
 
             <div
               className="
@@ -689,216 +829,322 @@ export default function WorkPlanPage() {
               </div>
 
             </div>
-            <div className="space-y-3">
+
+            {mode === "after" &&
+              selectedPlan?.evidences?.[0]?.before_image && (
+
+              <div className="mb-5">
+
+                  <p className="text-sm font-semibold mb-2">
+                      Foto Before
+                  </p>
+
+                  <img
+                      src={selectedPlan.evidences[0].before_image}
+                      className="
+                          w-full
+                          h-44
+                          object-cover
+                          rounded-2xl
+                      "
+                  />
+
+                  <div
+                      className="
+                          mt-2
+                          rounded-xl
+                          bg-gray-100
+                          p-3
+                          text-sm
+                      "
+                  >
+                      {selectedPlan.evidences[0].before_remark}
+                  </div>
+
+              </div>
+              
+
+              )}
+
+            <div className="space-y-5">
 
               <div
-                onClick={() =>
-                  beforeCameraRef.current?.click()
-                }
-                className="
+                  onClick={()=>
+
+                      mode==="before"
+
+                      ? beforeCameraRef.current?.click()
+
+                      : afterCameraRef.current?.click()
+
+                  }
+
+                  className="
                   border-2
                   border-dashed
-                  border-gray-200
                   rounded-3xl
                   p-6
                   text-center
                   cursor-pointer
-                  transition-all
-                  hover:border-brand-500
-                  hover:bg-brand-50
-                "
+                  hover:bg-gray-50
+                  "
               >
-                <p className="font-semibold text-gray-800">
-                  Foto Sebelum
-                </p>
 
-                <p className="text-xs text-gray-500 mt-1">
-                  Dokumentasikan kondisi sebelum pekerjaan dimulai
-                </p>
+                  <p className="font-semibold">
+
+                      {mode==="before"
+
+                          ? "Foto Before"
+
+                          : "Foto After"}
+
+                  </p>
+
+                  <p className="text-xs text-gray-500 mt-2">
+
+                      {mode==="before"
+
+                          ? "Ambil foto kondisi sebelum pekerjaan"
+
+                          : "Ambil foto hasil pekerjaan"}
+
+                  </p>
+
               </div>
 
               <input
-                ref={beforeCameraRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="hidden"
-                onChange={(e) => {
 
-                  const file =
-                    e.target.files?.[0]
+                  ref={
 
-                  if (file) {
-                    setBeforeImage(file)
+                      mode==="before"
+
+                      ? beforeCameraRef
+
+                      : afterCameraRef
+
                   }
 
-                }}
+                  type="file"
+
+                  accept="image/*"
+
+                  capture="environment"
+
+                  className="hidden"
+
+                  onChange={(e)=>{
+
+                      const file=e.target.files?.[0]
+
+                      if(!file)return
+
+                      if(mode==="before"){
+
+                          setBeforeImage(file)
+
+                      }else{
+
+                          setAfterImage(file)
+
+                      }
+
+                  }}
+
               />
 
-              {beforeImage && (
+              {(mode==="before"
 
-                <div>
+                  ? beforeImage
 
-                  <p
-                    className="
-                      text-xs
-                      font-medium
-                      text-gray-500
-                      mb-2
-                    "
-                  >
-                    Preview Foto Sebelum
-                  </p>
+                  : afterImage) && (
 
                   <img
-                    onClick={() =>
-                      setPreviewImage(
-                        URL.createObjectURL(beforeImage)
-                      )
-                    }
-                    src={URL.createObjectURL(
-                      beforeImage
-                    )}
-                    alt=""
-                    className="
-                      w-full
-                      h-40
-                      object-cover
-                      rounded-2xl
-                    "
-                  />
 
-                </div>
+                      src={URL.createObjectURL(
+
+                          mode==="before"
+
+                          ? beforeImage!
+
+                          : afterImage!
+
+                      )}
+
+                      onClick={()=>
+
+                          setPreviewImage(
+
+                              URL.createObjectURL(
+
+                                  mode==="before"
+
+                                  ? beforeImage!
+
+                                  : afterImage!
+
+                              )
+
+                          )
+
+                      }
+
+                      className="
+
+                      w-full
+
+                      h-52
+
+                      rounded-2xl
+
+                      object-cover
+
+                      "
+
+                  />
 
               )}
 
-            </div>
+              <textarea
 
-            <div className="space-y-3 mt-4">
+                  value={
 
-              <div
-                onClick={() =>
-                  afterCameraRef.current?.click()
-                }
-                className="
-                  border-2
-                  border-dashed
-                  border-green-200
-                  rounded-3xl
-                  p-6
-                  text-center
-                  cursor-pointer
-                  transition-all
-                  hover:border-green-500
-                  hover:bg-green-50
-                "
-              >
-                <p className="font-semibold text-gray-800">
-                  Foto Sesudah
-                </p>
+                      mode==="before"
 
-                <p className="text-xs text-gray-500 mt-1">
-                  Dokumentasikan hasil setelah pekerjaan selesai
-                </p>
-              </div>
+                      ? beforeRemark
 
-              <input
-                ref={afterCameraRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="hidden"
-                onChange={(e) => {
+                      : afterRemark
 
-                  const file =
-                    e.target.files?.[0]
-
-                  if (file) {
-                    setAfterImage(file)
                   }
 
-                }}
+                  onChange={(e)=>{
+
+                      if(mode==="before"){
+
+                          setBeforeRemark(e.target.value)
+
+                      }else{
+
+                          setAfterRemark(e.target.value)
+
+                      }
+
+                  }}
+
+                  placeholder={
+
+                      mode==="before"
+
+                      ? "Masukkan kondisi sebelum pekerjaan..."
+
+                      : "Masukkan hasil pekerjaan..."
+
+                  }
+
+                  className="
+
+                  w-full
+
+                  rounded-2xl
+
+                  border
+
+                  p-4
+
+                  resize-none
+
+                  "
+
+                  rows={4}
+
               />
 
-              {afterImage && (
+          </div>
 
-                <div>
+          <div className="flex gap-3 mt-6">
 
-                  <p
-                    className="
-                      text-xs
-                      font-medium
-                      text-gray-500
-                      mb-2
-                    "
-                  >
-                    Preview Foto Sesudah
-                  </p>
-
-                  <img
-                    onClick={() =>
-                      setPreviewImage(
-                        URL.createObjectURL(afterImage)
-                      )
-                    }
-                    src={URL.createObjectURL(
-                      afterImage
-                    )}
-                    alt=""
-                    className="
-                      w-full
-                      h-40
-                      object-cover
-                      rounded-2xl
-                    "
-                  />
-
-                </div>
-
-              )}
-
-            </div>
-
-            <div className="flex gap-2">
-
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => {
+          <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => {
 
                   setSelectedPlan(null)
 
                   setBeforeImage(null)
                   setAfterImage(null)
 
-                }}
-              >
-                Batal
-              </Button>
+                  setBeforeRemark("")
+                  setAfterRemark("")
 
-              <Button
-                className="flex-1 bg-green-600"
-                disabled={
-                  !beforeImage ||
-                  !afterImage ||
-                  uploadMut.isPending
-                }
-                onClick={() => {
+              }}
+          >
 
-                  const confirmed = window.confirm(
-                    'Pastikan foto sebelum dan sesudah sudah benar?'
+              Batal
+
+          </Button>
+
+          <Button
+
+              className={cn(
+
+                  "flex-1",
+
+                  mode==="before"
+
+                      ? "bg-brand-600"
+
+                      : "bg-blue-600"
+
+              )}
+
+              disabled={
+
+                  uploading ||
+
+                  (
+
+                      mode==="before"
+
+                          ? !beforeImage || !beforeRemark
+
+                          : !afterImage || !afterRemark
+
                   )
 
-                  if (!confirmed) return
+              }
 
-                  uploadMut.mutate()
+              onClick={() => {
 
-                }}
-              >
-                Selesaikan Pekerjaan
-              </Button>
+                  if(mode==="before"){
 
-            </div>
+                      beforeMutation.mutate()
+
+                  }else{
+
+                      afterMutation.mutate()
+
+                  }
+
+              }}
+
+          >
+
+              {
+
+                  uploading
+
+                  ? "Menyimpan..."
+
+                  : mode==="before"
+
+                      ? "Mulai Pekerjaan"
+
+                      : "Selesaikan Pekerjaan"
+
+              }
+
+          </Button>
+
+      </div>
 
           </div>
 
