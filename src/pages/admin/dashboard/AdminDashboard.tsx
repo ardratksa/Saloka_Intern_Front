@@ -721,7 +721,7 @@ console.log(issues)
                     )}
                   >
                     {issue.status === "resolved"
-                      ? "Resolved"
+                      ? "Close"
                       : "Open"}
                   </span>
 

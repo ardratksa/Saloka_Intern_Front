@@ -4,6 +4,7 @@ import { useAuthStore } from '@/store/authStore'
 // Auth
 import LoginPage from '@/pages/auth/LoginPage'
 import QrScanPage from '@/pages/auth/QrScanPage'
+import LoginFromSaloka from '@/pages/auth/LoginFromSaloka'
 
 // Admin
 import AdminLayout from '@/layouts/AdminLayout'
@@ -25,6 +26,7 @@ import DashboardPage from '@/pages/staff/DashboardPage'
 import ChecklistPage from '@/pages/staff/ChecklistPage'
 import IssuePage from '@/pages/staff/IssuePage'
 import WorkPlanPage from '@/pages/staff/WorkPlanPage'
+
 
 // kalau nanti ada profile page tinggal aktifkan
 // import ProfilePage from '@/pages/staff/ProfilePage'
@@ -74,6 +76,10 @@ export default function App() {
         {/* Public */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/scan" element={<QrScanPage />} />
+        <Route
+          path="/auth"
+          element={<LoginFromSaloka />}
+        />
 
         {/* ── ADMIN ───────────────────────── */}
         <Route

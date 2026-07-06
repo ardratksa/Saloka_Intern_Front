@@ -1,16 +1,23 @@
 import api from '@/lib/axios'
 import type { WorkProgram } from '@/types'
 
-export const getStaffPrograms =
-  async () => {
-
-    const res =
-      await api.get(
-        '/work-programs'
-      )
-
-    return res.data.data as WorkProgram[]
+export const getStaffPrograms = async (
+  params?: {
+    plan?: string
+    month?: number
+    year?: number
   }
+) => {
+
+  const res = await api.get(
+    "/work-programs",
+    {
+      params,
+    }
+  )
+
+  return res.data.data as WorkProgram[]
+}
 
 export const uploadBeforeEvidence =
   async (

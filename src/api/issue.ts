@@ -68,3 +68,23 @@ export const closeIssue = async (
 
   return res.data
 }
+
+export const exportIssueReport = async (params: any) => {
+
+    const res = await api.get(
+
+        "/issue-report/export",
+
+        {
+
+            params,
+
+            responseType: "blob",
+
+        }
+
+    )
+
+    return res.data
+
+}

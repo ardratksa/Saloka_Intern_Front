@@ -27,6 +27,23 @@ import {
 
 import { cn } from '@/lib/utils'
 import toast from 'react-hot-toast'
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024
+
+function validateImage(file: File) {
+
+    if (file.size > MAX_FILE_SIZE) {
+
+        toast.error("Ukuran foto maksimal 5 MB")
+
+        return false
+
+    }
+
+    return true
+
+}
+
 type StaffWorkProgram = {
   id: number
 
@@ -104,10 +121,33 @@ useState('')
   const [previewImage, setPreviewImage] =
   useState<string | null>(null)
 
-  const { data: plans, isLoading } = useQuery({
-    queryKey: ['work-plans', filterType],
-    queryFn:getStaffPrograms,
-  })
+  const currentMonth = new Date().getMonth() + 1
+const currentYear = new Date().getFullYear()
+
+const { data: plans, isLoading } = useQuery({
+
+  queryKey: [
+    "work-plans",
+    filterType,
+    currentMonth,
+    currentYear,
+  ],
+
+  queryFn: () =>
+    getStaffPrograms({
+
+      plan:
+        filterType === "all"
+          ? undefined
+          : filterType,
+
+      month: currentMonth,
+
+      year: currentYear,
+
+    }),
+
+})
 
 
   const beforeMutation=
@@ -131,7 +171,9 @@ useState('')
     "Pekerjaan dimulai"
     )
 
-    queryClient.invalidateQueries()
+    queryClient.invalidateQueries({
+        queryKey:["work-plans"]
+    })
 
     setSelectedPlan(null)
 
@@ -181,7 +223,9 @@ toast.success(
 "Pekerjaan selesai"
 )
 
-queryClient.invalidateQueries()
+queryClient.invalidateQueries({
+    queryKey:["work-plans"]
+})
 
 setSelectedPlan(null)
 
@@ -251,8 +295,6 @@ const statusBadge=(
 
   }
 
-  
-      const today = new Date().getDate()
 
   return (
     <div className="p-4">
@@ -478,19 +520,13 @@ const statusBadge=(
 
           .filter((plan: StaffWorkProgram) => {
 
-              const isToday =
-                  plan.scheduled_dates?.includes(today)
+    if (filterType === "all") {
+        return true
+    }
 
-              if (filterType === "all") {
-                  return isToday
-              }
+    return plan.plan === filterType
 
-              return (
-                  plan.plan === filterType &&
-                  isToday
-              )
-
-          })
+})
 
           .filter((plan: StaffWorkProgram) =>
 
@@ -948,6 +984,14 @@ const statusBadge=(
                       const file=e.target.files?.[0]
 
                       if(!file)return
+
+                      if(!validateImage(file)){
+
+                          e.target.value=""
+
+                          return
+
+                      }
 
                       if(mode==="before"){
 

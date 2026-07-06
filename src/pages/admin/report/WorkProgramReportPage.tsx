@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
-import { getWorkProgramReport } from '@/api/workProgramReport'
+import { getWorkProgramReport,exportWorkProgram, } from '@/api/workProgramReport'
 import { DataTable } from '@/components/admin/DataTable'
 import { cn } from '@/lib/utils'
 
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 
-import { CalendarRange } from 'lucide-react'
+import { CalendarRange, Download,
+    Filter } from 'lucide-react'
 
 import {
   Select,
@@ -36,6 +37,9 @@ export default function WorkProgramReportPage() {
   useState('all')
 
   const [selectedStatus, setSelectedStatus] =
+  useState('all')
+
+  const [selectedJob, setSelectedJob] =
   useState('all')
 
   const [selectedLocation, setSelectedLocation] =
@@ -284,6 +288,10 @@ export default function WorkProgramReportPage() {
         selectedStatus === 'all' ||
         item.status === selectedStatus
 
+    const matchJob =
+    selectedJob === 'all' ||
+    item.job_name === selectedJob
+
     const matchLocation =
         selectedLocation === 'all' ||
         item.location_name === selectedLocation
@@ -296,13 +304,84 @@ export default function WorkProgramReportPage() {
         (!endDate || itemDate <= endDate)
 
     return (
+
         matchCategory &&
         matchPlan &&
         matchStatus &&
+        matchJob &&
         matchLocation &&
         matchDate
+
     )
     })
+
+    const handleExport = async () => {
+
+    const blob = await exportWorkProgram({
+
+        category:
+
+            selectedCategory !== "all"
+
+                ? selectedCategory
+
+                : undefined,
+
+        plan:
+
+            selectedPlan !== "all"
+
+                ? selectedPlan
+
+                : undefined,
+
+        status:
+
+            selectedStatus !== "all"
+
+                ? selectedStatus
+
+                : undefined,
+
+        location:
+
+            selectedLocation !== "all"
+
+                ? selectedLocation
+
+                : undefined,
+
+        job:
+
+            selectedJob !== "all"
+
+                ? selectedJob
+
+                : undefined,
+
+        start_date:
+
+            startDate?.toISOString(),
+
+        end_date:
+
+            endDate?.toISOString(),
+
+    })
+
+    const url = window.URL.createObjectURL(blob)
+
+    const a = document.createElement("a")
+
+    a.href = url
+
+    a.download = "Work_Program_Report.xlsx"
+
+    a.click()
+
+    window.URL.revokeObjectURL(url)
+
+}
 
   return (
     <div className="p-6">
@@ -370,22 +449,63 @@ export default function WorkProgramReportPage() {
         }
 
           headerRight={
+
+            <div className="flex gap-3">
+
             <button
-                onClick={() =>
-                setShowFilter(true)
-                }
-                className="
-                h-11
-                px-4
-                rounded-xl
-                border
-                border-gray-200
-                bg-white
-                hover:bg-gray-50
-                "
+
+            onClick={handleExport}
+
+            className="
+            flex
+            items-center
+            gap-2
+            h-11
+            px-5
+            rounded-xl
+            border
+            border-gray-200
+            bg-white
+            hover:bg-gray-50
+            transition
+            "
+
             >
-                Filter
+
+            <Download className="w-5 h-5"/>
+
+            Export
+
             </button>
+
+            <button
+
+            onClick={() => setShowFilter(true)}
+
+            className="
+            flex
+            items-center
+            gap-2
+            h-11
+            px-5
+            rounded-xl
+            border
+            border-gray-200
+            bg-white
+            hover:bg-gray-50
+            transition
+            "
+
+            >
+
+            <Filter className="w-4 h-4"/>
+
+            Filter
+
+            </button>
+
+            </div>
+
             }
 
         searchPlaceholder="Cari program kerja..."
@@ -573,6 +693,76 @@ export default function WorkProgramReportPage() {
                     </Select>
                     </div>
 
+                    <div>
+
+                    <label
+                    className="
+                    block
+                    text-sm
+                    font-medium
+                    text-gray-600
+                    mb-2
+                    "
+                    >
+
+                    Jenis Pekerjaan
+
+                    </label>
+
+                    <Select
+
+                    value={selectedJob}
+
+                    onValueChange={setSelectedJob}
+
+                    >
+
+                    <SelectTrigger
+                    className="
+                    h-12
+                    w-full
+                    rounded-xl
+                    border-gray-200
+                    "
+                    >
+
+                    <SelectValue placeholder="Jenis Pekerjaan"/>
+
+                    </SelectTrigger>
+
+                    <SelectContent>
+
+                    <SelectItem value="all">
+
+                    Semua Pekerjaan
+
+                    </SelectItem>
+
+                    {[
+                    ...new Set(
+                    data.map(
+                    (x:any)=>x.job_name
+                    )
+                    ),
+                    ].map((job:any)=>(
+
+                    <SelectItem
+                    key={job}
+                    value={job}
+                    >
+
+                    {job}
+
+                    </SelectItem>
+
+                    ))}
+
+                    </SelectContent>
+
+                    </Select>
+
+                    </div>
+
                     {/* Lokasi */}
                     <div>
                     <label
@@ -648,6 +838,7 @@ export default function WorkProgramReportPage() {
                         setSelectedPlan('all')
                         setSelectedStatus('all')
                         setSelectedLocation('all')
+                        setSelectedJob('all')
 
                     }}
                     className="

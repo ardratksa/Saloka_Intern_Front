@@ -20,20 +20,51 @@ export const useAuthStore = create<AuthState>()(
       activeLocation: null,
 
       setAuth: (user, token) => {
+        console.log('========== SET AUTH ==========')
+        console.log('User:', user)
+        console.log('Token:', token)
+        console.log('Role:', user.role)
+
         localStorage.setItem('token', token)
         set({ user, token })
+
+        console.log('State setelah setAuth:', get())
+        console.log('==============================')
       },
 
       setActiveLocation: (location) => {
+        console.log('========== SET ACTIVE LOCATION ==========')
+        console.log(location)
+
         set({ activeLocation: location })
+
+        console.log('State sekarang:', get())
+        console.log('=========================================')
       },
 
       clearAuth: () => {
+        console.log('========== CLEAR AUTH ==========')
+        console.log('User sebelum logout:', get().user)
+
         localStorage.removeItem('token')
         set({ user: null, token: null, activeLocation: null })
+
+        console.log('State setelah logout:', get())
+        console.log('===============================')
       },
 
-      isAdmin: () => get().user?.role === 'admin',
+      isAdmin: () => {
+        const user = get().user
+        const result = user?.role === 'admin'
+
+        console.log('========== IS ADMIN ==========')
+        console.log('User:', user)
+        console.log('Role:', user?.role)
+        console.log('Result:', result)
+        console.log('==============================')
+
+        return result
+      },
     }),
     {
       name: 'saloks-auth',

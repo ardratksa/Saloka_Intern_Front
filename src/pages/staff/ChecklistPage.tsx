@@ -27,6 +27,17 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
+  const MAX_FILE_SIZE = 5 * 1024 * 1024 
+
+  function validateImage(file: File) {
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("Ukuran foto maksimal 5 MB")
+      return false
+    }
+
+    return true
+  }
+
 export default function ChecklistPage() {
   const navigate            = useNavigate()
   const queryClient         = useQueryClient()
@@ -686,13 +697,14 @@ export default function ChecklistPage() {
           className="hidden"
          onChange={(e) => {
 
-          const file =
-            e.target.files?.[0]
+          const file = e.target.files?.[0]
 
-          if (
-            !file ||
-            !selectedJobId
-          ) return
+          if (!file || !selectedJobId) return
+
+          if (!validateImage(file)) {
+              e.target.value = ""
+              return
+          }
 
           const item =
             checklist?.items.find(
@@ -1211,9 +1223,14 @@ export default function ChecklistPage() {
                     onChange={(e) => {
                       const file = e.target.files?.[0]
 
-                      if (file) {
-                        setPhotoFile(file)
+                      if (!file) return
+
+                      if (!validateImage(file)) {
+                          e.target.value = ""
+                          return
                       }
+
+                      setPhotoFile(file)
                     }}
                   />
 
@@ -1225,9 +1242,14 @@ export default function ChecklistPage() {
                     onChange={(e) => {
                       const file = e.target.files?.[0]
 
-                      if (file) {
-                        setPhotoFile(file)
+                      if (!file) return
+
+                      if (!validateImage(file)) {
+                          e.target.value = ""
+                          return
                       }
+
+                      setPhotoFile(file)
                     }}
                   />
 

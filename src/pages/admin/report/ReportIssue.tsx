@@ -1,11 +1,14 @@
 import { useState } from 'react'
 import { useQuery} from '@tanstack/react-query'
 import {getWeeklyReport} from '@/api/weeklyReport'
+import { exportIssueReport } from "@/api/issue"
 import { DataTable } from '@/components/admin/DataTable'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import {
   CalendarRange,
+  Download,
+  Filter
 } from 'lucide-react'
 import {
   Select,
@@ -94,7 +97,7 @@ export default function AdminReport() {
                 : 'bg-red-50 text-red-700 border-red-200'
           )}        >
           {i.status === 'resolved'
-            ? 'Resolved'
+            ? 'Close'
             : 'Open'}
         </span>
       ),
@@ -151,6 +154,73 @@ export default function AdminReport() {
     )
 
   }) || []
+  
+  const handleExport = async () => {
+
+    const blob = await exportIssueReport({
+
+        start_date:
+
+            startDate
+                ?.toISOString()
+                .split("T")[0],
+
+        end_date:
+
+            endDate
+                ?.toISOString()
+                .split("T")[0],
+
+        status:
+
+            selectedStatus !== "all"
+
+                ? selectedStatus
+
+                : undefined,
+
+        type:
+
+            selectedType !== "all"
+
+                ? selectedType
+
+                : undefined,
+
+        location:
+
+            selectedLocation !== "all"
+
+                ? selectedLocation
+
+                : undefined,
+
+        reported_by:
+
+            selectedPic !== "all"
+
+                ? selectedPic
+
+                : undefined,
+
+    })
+
+    const url =
+        window.URL.createObjectURL(blob)
+
+    const a =
+        document.createElement("a")
+
+    a.href = url
+
+    a.download =
+        "Issue_Report.xlsx"
+
+    a.click()
+
+    window.URL.revokeObjectURL(url)
+
+}
 
 return (
     <div className="p-6 space-y-5">
@@ -250,26 +320,63 @@ return (
 
                 headerRight={
 
-                <div className="flex items-center gap-3">
+                  <div className="flex gap-3">
 
-                    <button
-                    onClick={() => setShowFilter(true)}
-                    className="
-                        h-11
-                        px-4
-                        rounded-xl
-                        border
-                        border-gray-200
-                        bg-white
-                        hover:bg-gray-50
-                    "
-                    >
-                    Filter
-                    </button>
+                  <button
 
-                </div>
+                  onClick={handleExport}
 
-                }
+                  className="
+                  flex
+                  items-center
+                  gap-2
+                  h-11
+                  px-5
+                  rounded-xl
+                  border
+                  border-gray-200
+                  bg-white
+                  hover:bg-gray-50
+                  transition
+                  "
+
+                  >
+
+                  <Download className="w-5 h-5"/>
+
+                  Export
+
+                  </button>
+
+                  <button
+
+                  onClick={() => setShowFilter(true)}
+
+                  className="
+                  flex
+                  items-center
+                  gap-2
+                  h-11
+                  px-5
+                  rounded-xl
+                  border
+                  border-gray-200
+                  bg-white
+                  hover:bg-gray-50
+                  transition
+                  "
+
+                  >
+
+                  <Filter className="w-4 h-4"/>
+
+                  Filter
+
+                  </button>
+
+                  </div>
+
+                  }
               />
             </div>
           )}
@@ -492,7 +599,7 @@ return (
                         </SelectItem>
 
                         <SelectItem value="resolved">
-                        Resolved
+                        Close
                         </SelectItem>
 
                     </SelectContent>
@@ -641,9 +748,12 @@ return (
             </div>
 
             <div className="mt-4">
-                <b>Status:</b>
-                {' '}
-                {selectedIssue.status}
+                <b>Status:</b>{" "}
+                {
+                    selectedIssue.status === "resolved"
+                        ? "Close"
+                        : "Open"
+                }
               </div>
 
             <div className="flex gap-3 mt-6">

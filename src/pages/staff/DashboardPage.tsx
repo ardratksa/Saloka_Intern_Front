@@ -25,18 +25,17 @@ export default function DashboardPage() {
     )
   }
 
-  const totalArea =
-    data?.summary?.total ?? 0
+  const areaDone =
+  data?.summary?.location_done ?? 0
 
-  const totalLokasi =
-    data?.locations?.length ?? 0
+  const areaTotal =
+    data?.summary?.location_total ?? 0
 
-  const totalJob =
-    data?.locations?.reduce(
-      (sum: number, item: any) =>
-        sum + item.done,
-      0
-    ) ?? 0
+  const jobDone =
+    data?.summary?.job_done ?? 0
+
+  const jobTotal =
+    data?.summary?.job_total ?? 0
 
   const totalIssue =
     data?.locations?.reduce(
@@ -112,7 +111,7 @@ export default function DashboardPage() {
             </p>
 
             <p className="text-xl font-bold">
-              {totalArea}
+              {areaDone}/{areaTotal}
             </p>
           </div>
 
@@ -140,7 +139,10 @@ export default function DashboardPage() {
           </p>
 
           <p className="text-3xl font-bold mt-1">
-            {totalLokasi}
+            {areaDone}
+            <span className="text-lg text-gray-400">
+              /{areaTotal}
+            </span>
           </p>
         </div>
 
@@ -160,7 +162,10 @@ export default function DashboardPage() {
           </p>
 
           <p className="text-3xl font-bold mt-1">
-            {totalJob}
+            {jobDone}
+            <span className="text-lg text-gray-400">
+              /{jobTotal}
+            </span>
           </p>
         </div>
 

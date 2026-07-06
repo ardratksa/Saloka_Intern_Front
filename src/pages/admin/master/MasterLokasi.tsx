@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import Swal from 'sweetalert2'
+import { toPng } from "html-to-image"
 
 import {
   Select,
@@ -242,117 +243,46 @@ export default function MasterLokasi() {
   |--------------------------------------------------------------------------
   */
 
-  const downloadQR = () => {
+  const downloadQR = async () => {
 
-    try {
+  if (!qrData) return
 
-      const canvas =
-        document.querySelector(
-          '#qr-download canvas'
-        ) as HTMLCanvasElement
+  const node =
+    document.getElementById("qr-preview")
 
-      if (!canvas || !qrData) {
-
-        toast.error(
-          'QR tidak ditemukan'
-        )
-
-        return
-      }
-
-      /*
-      |--------------------------------------------------------------------------
-      | EXPORT CANVAS
-      |--------------------------------------------------------------------------
-      */
-
-      const exportCanvas =
-        document.createElement(
-          'canvas'
-        )
-
-      const padding = 30
-
-      exportCanvas.width =
-        canvas.width +
-        padding * 2
-
-      exportCanvas.height =
-        canvas.height +
-        padding * 2
-
-      const ctx =
-        exportCanvas.getContext(
-          '2d'
-        )
-
-      if (!ctx) return
-
-      /*
-      |--------------------------------------------------------------------------
-      | WHITE BACKGROUND
-      |--------------------------------------------------------------------------
-      */
-
-      ctx.fillStyle =
-        '#ffffff'
-
-      ctx.fillRect(
-        0,
-        0,
-        exportCanvas.width,
-        exportCanvas.height
-      )
-
-      /*
-      |--------------------------------------------------------------------------
-      | DRAW QR
-      |--------------------------------------------------------------------------
-      */
-
-      ctx.drawImage(
-        canvas,
-        padding,
-        padding
-      )
-
-      /*
-      |--------------------------------------------------------------------------
-      | DOWNLOAD
-      |--------------------------------------------------------------------------
-      */
-
-      const pngUrl =
-        exportCanvas.toDataURL(
-          'image/png'
-        )
-
-      const downloadLink =
-        document.createElement(
-          'a'
-        )
-
-      downloadLink.href =
-        pngUrl
-
-      downloadLink.download =
-        `${qrData.name}-qr.png`
-
-      downloadLink.click()
-
-      toast.success(
-        'QR berhasil didownload'
-      )
-
-    } catch (err) {
-
-      console.error(err)
-
-      toast.error(
-        'Gagal download QR'
-      )
-    }
+  if (!node) {
+    toast.error("Preview tidak ditemukan")
+    return
   }
+
+  try {
+
+    const dataUrl = await toPng(node, {
+      cacheBust: true,
+      pixelRatio: 3,
+    })
+
+    const link =
+      document.createElement("a")
+
+    link.download =
+      `${qrData.name}.png`
+
+    link.href = dataUrl
+
+    link.click()
+
+    toast.success("QR berhasil didownload")
+
+  } catch (err) {
+
+    console.error(err)
+
+    toast.error("Gagal download QR")
+
+  }
+
+}
 
   /*
   |--------------------------------------------------------------------------
@@ -800,6 +730,7 @@ export default function MasterLokasi() {
             </div>
 
             <div
+              id="qr-preview"
               className="
                 flex flex-col items-center
                 bg-white

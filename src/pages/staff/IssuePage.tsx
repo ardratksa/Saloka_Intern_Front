@@ -22,10 +22,25 @@ import { cn } from '@/lib/utils'
 import toast from 'react-hot-toast'
 import type { Issue } from '@/types'
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024
+
+function validateImage(file: File) {
+
+    if (file.size > MAX_FILE_SIZE) {
+
+        toast.error("Ukuran foto maksimal 5 MB")
+
+        return false
+
+    }
+
+    return true
+}
+
 
 const statusLabel: Record<string, string> = {
   open:        'Open',
-  resolved:    'Resolved',
+  resolved: 'Close',
 }
 
 const statusClass: Record<string, string> = {
@@ -434,11 +449,23 @@ export default function IssuePage() {
                       accept="image/*"
                       capture="environment"
                       className="hidden"
-                      onChange={(e) =>
-                        setCloseImage(
-                          e.target.files?.[0] || null
-                        )
-                      }
+                      onChange={(e) => {
+
+                        const file = e.target.files?.[0]
+
+                        if (!file) return
+
+                        if (!validateImage(file)) {
+
+                          e.target.value = ""
+
+                          return
+
+                        }
+
+                        setCloseImage(file)
+
+                      }}
                     />
 
                     <input
@@ -446,11 +473,23 @@ export default function IssuePage() {
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      onChange={(e) =>
-                        setCloseImage(
-                          e.target.files?.[0] || null
-                        )
-                      }
+                      onChange={(e) => {
+
+                        const file = e.target.files?.[0]
+
+                        if (!file) return
+
+                        if (!validateImage(file)) {
+
+                          e.target.value = ""
+
+                          return
+
+                        }
+
+                        setCloseImage(file)
+
+                      }}
                     />
 
                     {closeImage && (

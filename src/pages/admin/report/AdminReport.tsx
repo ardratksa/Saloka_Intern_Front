@@ -55,6 +55,14 @@ export default function AdminReport() {
 
   const [selectedStatus, setSelectedStatus] =
     useState('all')
+
+  const formatDate = (date: Date) => {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+
+    return `${year}-${month}-${day}`
+  }
   
   const [
     openFilter,
@@ -70,7 +78,11 @@ export default function AdminReport() {
 >([])
 
 const [openPreview, setOpenPreview] = useState(false)
-
+console.log(
+  "DATE",
+  startDate,
+  endDate
+)
   const {
     data: report,
     isLoading,
@@ -84,15 +96,14 @@ const [openPreview, setOpenPreview] = useState(false)
   ],
 
   queryFn: () =>
-    getWeeklyReport(
-      startDate!.toISOString().split('T')[0],
-      endDate!.toISOString().split('T')[0]
-    ),
+  getWeeklyReport(
+    formatDate(startDate!),
+    formatDate(endDate!)
+  ),
 
   placeholderData: (prev) => prev,
 })
       
-
   const checklistColumns = [
 
   {
@@ -205,13 +216,8 @@ const handleExport = async () => {
 
   const blob =
     await exportReport(
-      startDate
-        .toISOString()
-        .split('T')[0],
-
-      endDate
-        .toISOString()
-        .split('T')[0]
+      formatDate(startDate),
+      formatDate(endDate)
     )
 
   const url =

@@ -1,4 +1,9 @@
+# ===============================
+
 # Logs
+
+# ===============================
+
 logs
 *.log
 npm-debug.log*
@@ -7,18 +12,65 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# ===============================
+
+# Dependencies
+
+# ===============================
+
 node_modules
-dist
-dist-ssr
+
+# ===============================
+
+# Build Output
+
+# (dist tidak di-ignore agar bisa ikut repo saat merge staging → build)
+
+# ===============================
+
+# dist
+
+# dist-ssr
+
+# ===============================
+
+# Local Environment
+
+# ===============================
+
 *.local
 
-# Editor directories and files
+# ===============================
+
+# App Local Config (tidak ikut git)
+
+# ===============================
+
+# config.js
+# src/config.js
+# public/config.js
+
+# ===============================
+
+# Server Files
+
+# ===============================
+
+.user.ini
+dist/.user.ini
+
+# ===============================
+
+# Editor / IDE Files
+
+# ===============================
+
 .vscode/*
 !.vscode/extensions.json
 .idea
 .DS_Store
 *.suo
-*.ntvs*
+.ntvs
 *.njsproj
 *.sln
 *.sw?
