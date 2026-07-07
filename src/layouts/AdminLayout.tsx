@@ -1,6 +1,4 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
-import { useAuthStore } from '@/store/authStore'
-import { logout } from '@/api/auth'
+import { Outlet, NavLink} from 'react-router-dom'
 import {
   LayoutDashboard,
   Clock,
@@ -10,11 +8,9 @@ import {
   BarChart2,
   ChevronDown,
   ChevronRight,
-  LogOut,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
-import toast from 'react-hot-toast'
 import { CalendarDays } from 'lucide-react'
 
 const NAV = [
@@ -113,8 +109,6 @@ const NAV = [
 ]
 
 export default function AdminLayout() {
-  const { clearAuth } = useAuthStore()
-  const navigate = useNavigate()
   const [openMenus, setOpenMenus] =
   useState<string[]>([
     'Data Master',
@@ -122,12 +116,7 @@ export default function AdminLayout() {
   ])
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
-  const handleLogout = async () => {
-    try { await logout() } catch { /* ignore */ }
-    clearAuth()
-    navigate('/login')
-    toast.success('Logout berhasil')
-  }
+  
 
   return (
     <div className="flex h-screen bg-[#f5f7fb]">
@@ -152,7 +141,10 @@ export default function AdminLayout() {
               <img
                 src="/logo-saloka.png"
                 alt="Saloka"
-                className="h-12 object-contain transition-all duration-300"
+                className="h-12 object-contain transition-all duration-300 cursor-pointer"
+                onClick={() => {
+                  window.location.replace("https://salokapark.app")
+                }}
               />
             </div>
           )}
@@ -328,20 +320,7 @@ export default function AdminLayout() {
 
         {/* Footer */}
 
-        <div className="mt-auto px-4 pb-4">
-
-          <button
-            onClick={handleLogout}
-            className="w-full h-10 flex items-center justify-center
-                      rounded-xl text-gray-400
-                      hover:bg-red-50 hover:text-red-500
-                      transition-all duration-200"
-            title="Logout"
-          >
-
-            <LogOut className="w-4 h-4" />
-          </button>
-        </div>
+      
       </aside>
 
       {/* ── Main ────────────────────────────────────────── */}

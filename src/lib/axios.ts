@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
- baseURL: 'https://srvchecklistandcleanplan.salokapark.app/api',
+ baseURL: 'https://srvchecklistandcleanplan.salokapark.app',
    headers: {
     'Content-Type': 'application/json',
     // Accept: 'application/json',

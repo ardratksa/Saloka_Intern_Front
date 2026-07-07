@@ -211,39 +211,44 @@ const filteredChecklists =
 
 const handleExport = async () => {
 
-  if (!startDate || !endDate)
-    return
+  if (!startDate || !endDate) return
 
-  const blob =
-    await exportReport(
-      formatDate(startDate),
-      formatDate(endDate)
-    )
+  const blob = await exportReport({
 
-  const url =
-    window.URL.createObjectURL(
-      new Blob([blob])
-    )
+    start_date: formatDate(startDate),
 
-  const link =
-    document.createElement('a')
+    end_date: formatDate(endDate),
+
+    location: selectedLocation,
+
+    type: selectedType,
+
+    period: selectedPeriod,
+
+    pic: selectedPic,
+
+    status: selectedStatus,
+
+  })
+
+  const url = window.URL.createObjectURL(
+    new Blob([blob])
+  )
+
+  const link = document.createElement('a')
 
   link.href = url
 
-  link.download =
-    'cleaning-report.xlsx'
+  link.download = 'cleaning-report.xlsx'
 
-  document.body.appendChild(
-    link
-  )
+  document.body.appendChild(link)
 
   link.click()
 
   link.remove()
 
-  window.URL.revokeObjectURL(
-    url
-  )
+  window.URL.revokeObjectURL(url)
+
 }
 
 const availableLocations =
