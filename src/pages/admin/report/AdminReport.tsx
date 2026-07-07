@@ -312,7 +312,7 @@ return (
       ) : report? (
         <>
           {/* Summary cards */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
               {
                 label: 'Total Tugas',
@@ -337,12 +337,6 @@ return (
                 value: report?.summary.issues,
                 color: 'text-red-500',
                 bg:    'bg-red-50',
-              },
-              {
-                label: 'Rata-rata Skor',
-                value: '88%',
-                color: 'text-green-700',
-                bg: 'bg-green-50',
               },
             ].map(({ label, value, color, bg }) => (
               <div key={label}
@@ -721,12 +715,12 @@ return (
                 <SelectContent position="popper">
 
                   <SelectItem value="all">
-                    Semua Periode
+                    Semua PIC
                   </SelectItem>
 
                   {[...new Set(
                     report?.checklists.map(
-                      (x:any) => x.period
+                      (x:any) => x.pic
                     )
                   )].map((item:any) => (
 

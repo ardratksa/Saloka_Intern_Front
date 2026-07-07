@@ -249,7 +249,6 @@ return (
         <>
 
           {/* Issues table */}
-          {report?.issues?.length > 0 && (
             <div
               className="
                 bg-white
@@ -379,7 +378,7 @@ return (
                   }
               />
             </div>
-          )}
+        
         </>
       ) : null}
 
