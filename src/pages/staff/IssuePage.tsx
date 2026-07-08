@@ -22,13 +22,13 @@ import { cn } from '@/lib/utils'
 import toast from 'react-hot-toast'
 import type { Issue } from '@/types'
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024
+const MAX_FILE_SIZE = 20 * 1024 * 1024
 
 function validateImage(file: File) {
 
     if (file.size > MAX_FILE_SIZE) {
 
-        toast.error("Ukuran foto maksimal 5 MB")
+        toast.error("Ukuran foto maksimal 20 MB")
 
         return false
 

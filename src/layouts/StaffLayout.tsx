@@ -7,7 +7,6 @@ import {
   AlertTriangle,
   Wrench,
   UserCircle,
-  KeyRound,
   LogOut,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -74,10 +73,13 @@ export default function StaffLayout() {
       >
         <div className="flex items-center pl-2">
           <img
-            src="/logo-saloka.png"
-            alt="Saloka"
-            className="h-8 w-auto"
-          />
+                src="/logo-saloka.png"
+                alt="Saloka"
+                className="h-12 object-contain transition-all duration-300 cursor-pointer"
+                onClick={() => {
+                  window.location.replace("https://salokapark.app")
+                }}
+              />
         </div>
 
         <DropdownMenu>
@@ -130,23 +132,10 @@ export default function StaffLayout() {
 
           {/* MENU */}
           <DropdownMenuItem
-            className="rounded-xl cursor-pointer"
-          >
-            <UserCircle className="w-4 h-4 mr-2" />
-            Profil
-          </DropdownMenuItem>
-
-          <DropdownMenuItem
-            className="rounded-xl cursor-pointer"
-          >
-            <KeyRound className="w-4 h-4 mr-2" />
-            Ganti Password
-          </DropdownMenuItem>
-
-          <DropdownMenuSeparator />
-
-          <DropdownMenuItem
             onClick={handleLogout}
+            // onClick={() => {
+            //       window.location.replace("https://salokapark.app")
+            //     }}
             className="
               rounded-xl
               cursor-pointer
@@ -156,6 +145,8 @@ export default function StaffLayout() {
           >
             <LogOut className="w-4 h-4 mr-2" />
             Logout
+            
+            
           </DropdownMenuItem>
 
         </DropdownMenuContent>

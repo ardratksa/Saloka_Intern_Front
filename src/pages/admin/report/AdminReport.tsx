@@ -11,6 +11,7 @@ import {
    SlidersHorizontal,
    Eye,
    X,
+   Loader2
 } from 'lucide-react'
 import {
   Select,
@@ -83,6 +84,8 @@ console.log(
   startDate,
   endDate
 )
+
+const [exportLoading, setExportLoading] = useState(false)
   const {
     data: report,
     isLoading,
@@ -213,41 +216,55 @@ const handleExport = async () => {
 
   if (!startDate || !endDate) return
 
-  const blob = await exportReport({
+  try {
 
-    start_date: formatDate(startDate),
+    setExportLoading(true)
 
-    end_date: formatDate(endDate),
+    const blob = await exportReport({
 
-    location: selectedLocation,
+      start_date: formatDate(startDate),
 
-    type: selectedType,
+      end_date: formatDate(endDate),
 
-    period: selectedPeriod,
+      location: selectedLocation,
 
-    pic: selectedPic,
+      type: selectedType,
 
-    status: selectedStatus,
+      period: selectedPeriod,
 
-  })
+      pic: selectedPic,
 
-  const url = window.URL.createObjectURL(
-    new Blob([blob])
-  )
+      status: selectedStatus,
 
-  const link = document.createElement('a')
+    })
 
-  link.href = url
+    const url = window.URL.createObjectURL(
+      new Blob([blob])
+    )
 
-  link.download = 'cleaning-report.xlsx'
+    const link = document.createElement('a')
 
-  document.body.appendChild(link)
+    link.href = url
 
-  link.click()
+    link.download = 'cleaning-report.xlsx'
 
-  link.remove()
+    document.body.appendChild(link)
 
-  window.URL.revokeObjectURL(url)
+    link.click()
+
+    link.remove()
+
+    window.URL.revokeObjectURL(url)
+
+  } finally {
+
+    setTimeout(() => {
+
+      setExportLoading(false)
+
+    }, 500)
+
+  }
 
 }
 
@@ -822,7 +839,7 @@ return (
                     border
                   "
                 >
-                  Tutup
+                  Done
                 </button>
 
               </div>
@@ -962,6 +979,53 @@ return (
         </div>
 
         )}
+        {exportLoading && (
+
+          <div
+            className="
+              fixed inset-0
+              z-[99999]
+              bg-black/30
+              backdrop-blur-sm
+              flex items-center justify-center
+            "
+          >
+
+            <div
+          className="
+            bg-white
+            rounded-2xl
+            px-7
+            py-6
+            shadow-xl
+            text-center
+            w-[290px]
+          "
+        >
+
+          <Loader2
+            className="
+              w-9
+              h-9
+              mx-auto
+              text-green-700
+              animate-spin
+            "
+          />
+
+          <h2 className="mt-3 text-xl font-semibold">
+            Exporting Excel
+          </h2>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Mohon tunggu sebentar...
+          </p>
+
+        </div>
+
+      </div>
+
+)}
     </div>
   )
 }

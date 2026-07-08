@@ -8,7 +8,8 @@ import 'react-datepicker/dist/react-datepicker.css'
 import {
   CalendarRange,
   Download,
-  Filter
+  Filter,
+  Loader2
 } from 'lucide-react'
 import {
   Select,
@@ -38,6 +39,8 @@ export default function AdminReport() {
 
     const [selectedPic, setSelectedPic] =
     useState('all')
+    const [exportLoading, setExportLoading] =
+    useState(false)
 
   const [
     startDate,
@@ -157,68 +160,68 @@ export default function AdminReport() {
   
   const handleExport = async () => {
 
+  try {
+
+    setExportLoading(true)
+
     const blob = await exportIssueReport({
 
-        start_date:
+      start_date:
+        startDate
+          ?.toISOString()
+          .split("T")[0],
 
-            startDate
-                ?.toISOString()
-                .split("T")[0],
+      end_date:
+        endDate
+          ?.toISOString()
+          .split("T")[0],
 
-        end_date:
+      status:
+        selectedStatus !== "all"
+          ? selectedStatus
+          : undefined,
 
-            endDate
-                ?.toISOString()
-                .split("T")[0],
+      type:
+        selectedType !== "all"
+          ? selectedType
+          : undefined,
 
-        status:
+      location:
+        selectedLocation !== "all"
+          ? selectedLocation
+          : undefined,
 
-            selectedStatus !== "all"
-
-                ? selectedStatus
-
-                : undefined,
-
-        type:
-
-            selectedType !== "all"
-
-                ? selectedType
-
-                : undefined,
-
-        location:
-
-            selectedLocation !== "all"
-
-                ? selectedLocation
-
-                : undefined,
-
-        reported_by:
-
-            selectedPic !== "all"
-
-                ? selectedPic
-
-                : undefined,
+      reported_by:
+        selectedPic !== "all"
+          ? selectedPic
+          : undefined,
 
     })
 
     const url =
-        window.URL.createObjectURL(blob)
+      window.URL.createObjectURL(blob)
 
     const a =
-        document.createElement("a")
+      document.createElement("a")
 
     a.href = url
 
     a.download =
-        "Issue_Report.xlsx"
+      "Issue_Report.xlsx"
 
     a.click()
 
     window.URL.revokeObjectURL(url)
+
+  } finally {
+
+    setTimeout(() => {
+
+      setExportLoading(false)
+
+    }, 500)
+
+  }
 
 }
 
@@ -642,7 +645,7 @@ return (
                     py-2
                 "
                 >
-                Tutup
+                Done
                 </button>
 
             </div>
@@ -771,6 +774,56 @@ return (
           </div>
         </div>
         
+      )}
+      {exportLoading && (
+
+        <div
+          className="
+            fixed
+            inset-0
+            z-[99999]
+            bg-black/30
+            backdrop-blur-sm
+            flex
+            items-center
+            justify-center
+          "
+        >
+
+          <div
+            className="
+              bg-white
+              rounded-2xl
+              px-7
+              py-6
+              shadow-xl
+              text-center
+              w-[290px]
+            "
+          >
+
+            <Loader2
+              className="
+                w-9
+                h-9
+                mx-auto
+                text-green-700
+                animate-spin
+              "
+            />
+
+            <h2 className="mt-3 text-xl font-semibold">
+              Exporting Excel
+            </h2>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Mohon tunggu sebentar...
+            </p>
+
+          </div>
+
+        </div>
+
       )}
     </div>
   )

@@ -8,8 +8,12 @@ import { cn } from '@/lib/utils'
 import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 
-import { CalendarRange, Download,
-    Filter } from 'lucide-react'
+import { 
+  CalendarRange, 
+  Download,
+  Filter,
+  Loader2
+} from 'lucide-react'
 
 import {
   Select,
@@ -47,6 +51,9 @@ export default function WorkProgramReportPage() {
 
   const [previewImage, setPreviewImage] =
   useState<string | null>(null)
+
+  const [exportLoading, setExportLoading] =
+  useState(false)
 
   const [startDate, setStartDate] =
   useState<Date | null>(
@@ -317,71 +324,71 @@ export default function WorkProgramReportPage() {
 
     const handleExport = async () => {
 
-    const blob = await exportWorkProgram({
+      try {
 
-        category:
+        setExportLoading(true)
 
+        const blob = await exportWorkProgram({
+
+          category:
             selectedCategory !== "all"
+              ? selectedCategory
+              : undefined,
 
-                ? selectedCategory
-
-                : undefined,
-
-        plan:
-
+          plan:
             selectedPlan !== "all"
+              ? selectedPlan
+              : undefined,
 
-                ? selectedPlan
-
-                : undefined,
-
-        status:
-
+          status:
             selectedStatus !== "all"
+              ? selectedStatus
+              : undefined,
 
-                ? selectedStatus
-
-                : undefined,
-
-        location:
-
+          location:
             selectedLocation !== "all"
+              ? selectedLocation
+              : undefined,
 
-                ? selectedLocation
-
-                : undefined,
-
-        job:
-
+          job:
             selectedJob !== "all"
+              ? selectedJob
+              : undefined,
 
-                ? selectedJob
-
-                : undefined,
-
-        start_date:
-
+          start_date:
             startDate?.toISOString(),
 
-        end_date:
-
+          end_date:
             endDate?.toISOString(),
 
-    })
+        })
 
-    const url = window.URL.createObjectURL(blob)
+        const url =
+          window.URL.createObjectURL(blob)
 
-    const a = document.createElement("a")
+        const a =
+          document.createElement("a")
 
-    a.href = url
+        a.href = url
 
-    a.download = "Work_Program_Report.xlsx"
+        a.download =
+          "Work_Program_Report.xlsx"
 
-    a.click()
+        a.click()
 
-    window.URL.revokeObjectURL(url)
+        window.URL.revokeObjectURL(url)
 
-}
+      } finally {
+
+        setTimeout(() => {
+
+          setExportLoading(false)
+
+        }, 500)
+
+      }
+
+    }
 
   return (
     <div className="p-6">
@@ -861,7 +868,7 @@ export default function WorkProgramReportPage() {
                         rounded-xl
                     "
                     >
-                    Tutup
+                    Done
                     </button>
 
                 </div>
@@ -1232,6 +1239,56 @@ export default function WorkProgramReportPage() {
 
         )}
 
+      {exportLoading && (
+
+        <div
+          className="
+            fixed
+            inset-0
+            z-[99999]
+            bg-black/30
+            backdrop-blur-sm
+            flex
+            items-center
+            justify-center
+          "
+        >
+
+          <div
+            className="
+              bg-white
+              rounded-2xl
+              px-7
+              py-6
+              shadow-xl
+              text-center
+              w-[290px]
+            "
+          >
+
+            <Loader2
+              className="
+                w-9
+                h-9
+                mx-auto
+                text-green-700
+                animate-spin
+              "
+            />
+
+            <h2 className="mt-3 text-xl font-semibold">
+              Exporting Excel
+            </h2>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Mohon tunggu sebentar...
+            </p>
+
+          </div>
+
+        </div>
+
+      )}
     </div>
   )
 }

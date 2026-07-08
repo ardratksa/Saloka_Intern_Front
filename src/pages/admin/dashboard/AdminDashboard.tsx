@@ -14,6 +14,7 @@ import {
   TrendingUp,
   Eye,
   Download,
+  Loader2
 } from 'lucide-react'
 
 import {
@@ -68,6 +69,7 @@ export default function AdminDashboard() {
   const [filterShift, setFilterShift] = useState('all')
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [detail, setDetail] = useState<Session | null>(null)
+  const [isExporting, setIsExporting] = useState(false)
   const { data: issues = [] } = useQuery({
   queryKey: ['dashboard-issues'],
   queryFn: () => getIssues(),
@@ -188,9 +190,13 @@ console.log(issues)
   }
 
   const handleExport = async () => {
+
   try {
 
+    setIsExporting(true)
+
     const blob = await exportDashboard({
+
       date: dateFrom,
 
       location_id:
@@ -210,6 +216,7 @@ console.log(issues)
         filterShift !== 'all'
           ? filterShift
           : undefined,
+
     })
 
     saveAs(
@@ -221,10 +228,14 @@ console.log(issues)
 
     console.error(error)
 
-    alert(
-      'Gagal export data'
-    )
+    alert('Gagal export data')
+
+  } finally {
+
+    setIsExporting(false)
+
   }
+
 }
 
   const sessionIssues = detail
@@ -881,6 +892,63 @@ console.log(issues)
           </div>
         </div>
       )}
+
+      {isExporting && (
+
+        <div
+          className="
+            fixed
+            inset-0
+            bg-black/40
+            backdrop-blur-sm
+            z-[9999]
+            flex
+            items-center
+            justify-center
+          "
+        >
+
+          <div
+            className="
+              bg-white
+              rounded-3xl
+              shadow-xl
+              px-10
+              py-8
+              flex
+              flex-col
+              items-center
+              gap-5
+              min-w-[320px]
+            "
+          >
+
+            <Loader2
+              className="
+                w-12
+                h-12
+                text-brand-600
+                animate-spin
+              "
+            />
+
+            <div className="text-center">
+
+              <h3 className="text-xl font-semibold">
+                Exporting Excel
+              </h3>
+
+              <p className="text-gray-500 mt-2">
+                Mohon tunggu sebentar...
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        )}
       {previewImage && (
         <div
           className="
