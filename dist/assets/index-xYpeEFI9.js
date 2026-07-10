@@ -1017,20 +1017,20 @@ https://sweetalert2.github.io/#ajax-request`),ii(e),typeof e.title==`string`&&(e
               mx-auto\r
               text-green-700\r
               animate-spin\r
-            `}),(0,z.jsx)(`h2`,{className:`mt-3 text-xl font-semibold`,children:`Exporting Excel`}),(0,z.jsx)(`p`,{className:`mt-1 text-sm text-gray-500`,children:`Mohon tunggu sebentar...`})]})})]})}function _P(){let[e,t]=(0,R.useState)(!1),[n,r]=(0,R.useState)(null),[i,a]=(0,R.useState)(!1),[o,s]=(0,R.useState)(`all`),[c,l]=(0,R.useState)(`all`),[u,d]=(0,R.useState)(`all`),[f,p]=(0,R.useState)(`all`),[m,h]=(0,R.useState)(!1),[g,_]=(0,R.useState)(new Date(new Date().getFullYear(),new Date().getMonth(),1)),[v,y]=(0,R.useState)(new Date),{data:b,isLoading:x}=V({enabled:!!g&&!!v,queryKey:[`report`,g,v],queryFn:()=>FD(g.toISOString().split(`T`)[0],v.toISOString().split(`T`)[0]),placeholderData:e=>e}),S=[{key:`type`,label:`Jenis Issue`},{key:`location`,label:`Lokasi`},{key:`reported_by`,label:`Dilaporkan`},{key:`date`,label:`Tanggal`},{key:`status`,label:`Status`,render:e=>(0,z.jsx)(`span`,{className:gx(`text-xs px-3 py-1 rounded-full font-medium border`,e.status===`resolved`?`bg-emerald-50 text-emerald-700 border-emerald-200`:`bg-red-50 text-red-700 border-red-200`),children:e.status===`resolved`?`Close`:`Open`})},{key:`action`,label:`Aksi`,render:e=>(0,z.jsx)(`button`,{onClick:()=>{r(e),t(!0)},className:`\r
+            `}),(0,z.jsx)(`h2`,{className:`mt-3 text-xl font-semibold`,children:`Exporting Excel`}),(0,z.jsx)(`p`,{className:`mt-1 text-sm text-gray-500`,children:`Mohon tunggu sebentar...`})]})})]})}function _P(){let[e,t]=(0,R.useState)(!1),[n,r]=(0,R.useState)(null),[i,a]=(0,R.useState)(!1),[o,s]=(0,R.useState)(`all`),[c,l]=(0,R.useState)(`all`),[u,d]=(0,R.useState)(`all`),[f,p]=(0,R.useState)(`all`),[m,h]=(0,R.useState)(`all`),[g,_]=(0,R.useState)(!1),[v,y]=(0,R.useState)(new Date(new Date().getFullYear(),new Date().getMonth(),1)),[b,x]=(0,R.useState)(new Date),{data:S,isLoading:C}=V({enabled:!!v&&!!b,queryKey:[`report`,v,b],queryFn:()=>FD(v.toISOString().split(`T`)[0],b.toISOString().split(`T`)[0]),placeholderData:e=>e}),w=[{key:`type`,label:`Jenis Issue`},{key:`location`,label:`Lokasi`},{key:`reported_by`,label:`Dilaporkan`},{key:`date`,label:`Tanggal`},{key:`status`,label:`Status`,render:e=>(0,z.jsx)(`span`,{className:gx(`text-xs px-3 py-1 rounded-full font-medium border`,e.status===`resolved`?`bg-emerald-50 text-emerald-700 border-emerald-200`:`bg-red-50 text-red-700 border-red-200`),children:e.status===`resolved`?`Close`:`Open`})},{key:`action`,label:`Aksi`,render:e=>(0,z.jsx)(`button`,{onClick:()=>{r(e),t(!0)},className:`\r
             px-3 py-1\r
             rounded-lg\r
             bg-brand-600\r
             text-white\r
             text-xs\r
             font-medium\r
-          `,children:`Detail`})}],C=b?.issues.filter(e=>{let t=o===`all`||e.location===o,n=c===`all`||e.status===c,r=u===`all`||e.type===u,i=f===`all`||e.reported_by===f;return t&&n&&r&&i})||[];return(0,z.jsxs)(`div`,{className:`p-6 space-y-5`,children:[(0,z.jsx)(`div`,{className:`flex items-center justify-between`,children:(0,z.jsxs)(`div`,{children:[(0,z.jsx)(`h1`,{className:`text-lg font-semibold text-gray-900`,children:`Laporan Issue`}),(0,z.jsx)(`p`,{className:`text-sm text-gray-500 mt-0.5`,children:`Daftar seluruh issue cleaning service`})]})}),x?(0,z.jsx)(`div`,{className:`space-y-3`,children:[1,2,3].map(e=>(0,z.jsx)(`div`,{className:`h-24 bg-gray-100 rounded-xl animate-pulse`},e))}):b?(0,z.jsx)(z.Fragment,{children:(0,z.jsx)(`div`,{className:`\r
+          `,children:`Detail`})}],T=S?.issues.filter(e=>{let t=o===`all`||e.location===o,n=c===`all`||e.status===c,r=u===`all`||e.type===u,i=f===`all`||e.reported_by===f,a=m===`all`||e.job_name===m;return t&&n&&r&&i&&a})||[];return(0,z.jsxs)(`div`,{className:`p-6 space-y-5`,children:[(0,z.jsx)(`div`,{className:`flex items-center justify-between`,children:(0,z.jsxs)(`div`,{children:[(0,z.jsx)(`h1`,{className:`text-lg font-semibold text-gray-900`,children:`Laporan Issue`}),(0,z.jsx)(`p`,{className:`text-sm text-gray-500 mt-0.5`,children:`Daftar seluruh issue cleaning service`})]})}),C?(0,z.jsx)(`div`,{className:`space-y-3`,children:[1,2,3].map(e=>(0,z.jsx)(`div`,{className:`h-24 bg-gray-100 rounded-xl animate-pulse`},e))}):S?(0,z.jsx)(z.Fragment,{children:(0,z.jsx)(`div`,{className:`\r
                 bg-white\r
                 rounded-xl\r
                 border\r
                 border-gray-200\r
                 overflow-hidden\r
-              `,children:(0,z.jsx)(DT,{title:`Daftar Issue`,data:C.map(e=>({...e,id:e.id}))||[],columns:S,searchPlaceholder:`Cari issue...`,headerLeft:(0,z.jsx)(`div`,{className:`flex items-center gap-3`,children:(0,z.jsxs)(`div`,{className:`relative`,children:[(0,z.jsx)(Fx,{className:`\r
+              `,children:(0,z.jsx)(DT,{title:`Daftar Issue`,data:T.map(e=>({...e,id:e.id}))||[],columns:w,searchPlaceholder:`Cari issue...`,headerLeft:(0,z.jsx)(`div`,{className:`flex items-center gap-3`,children:(0,z.jsxs)(`div`,{className:`relative`,children:[(0,z.jsx)(Fx,{className:`\r
                         absolute\r
                         left-3\r
                         top-1/2\r
@@ -1038,7 +1038,7 @@ https://sweetalert2.github.io/#ajax-request`),ii(e),typeof e.title==`string`&&(e
                         h-4\r
                         w-4\r
                         text-gray-400\r
-                        `}),(0,z.jsx)(pP,{selectsRange:!0,startDate:g,endDate:v,onChange:e=>{let[t,n]=e;_(t),y(n)},dateFormat:`dd MMM yyyy`,className:`\r
+                        `}),(0,z.jsx)(pP,{selectsRange:!0,startDate:v,endDate:b,onChange:e=>{let[t,n]=e;y(t),x(n)},dateFormat:`dd MMM yyyy`,className:`\r
                         h-11\r
                         w-[300px]\r
                         rounded-xl\r
@@ -1047,7 +1047,7 @@ https://sweetalert2.github.io/#ajax-request`),ii(e),typeof e.title==`string`&&(e
                         pl-10\r
                         pr-3\r
                         text-sm\r
-                        `})]})}),headerRight:(0,z.jsxs)(`div`,{className:`flex gap-3`,children:[(0,z.jsxs)(`button`,{onClick:async()=>{try{h(!0);let e=await QC({start_date:g?.toISOString().split(`T`)[0],end_date:v?.toISOString().split(`T`)[0],status:c===`all`?void 0:c,type:u===`all`?void 0:u,location:o===`all`?void 0:o,reported_by:f===`all`?void 0:f}),t=window.URL.createObjectURL(e),n=document.createElement(`a`);n.href=t,n.download=`Issue_Report.xlsx`,n.click(),window.URL.revokeObjectURL(t)}finally{setTimeout(()=>{h(!1)},500)}},className:`\r
+                        `})]})}),headerRight:(0,z.jsxs)(`div`,{className:`flex gap-3`,children:[(0,z.jsxs)(`button`,{onClick:async()=>{try{_(!0);let e=await QC({start_date:v?.toISOString().split(`T`)[0],end_date:b?.toISOString().split(`T`)[0],status:c===`all`?void 0:c,type:u===`all`?void 0:u,location:o===`all`?void 0:o,reported_by:f===`all`?void 0:f,job:m===`all`?void 0:m}),t=window.URL.createObjectURL(e),n=document.createElement(`a`);n.href=t,n.download=`Issue_Report.xlsx`,n.click(),window.URL.revokeObjectURL(t)}finally{setTimeout(()=>{_(!1)},500)}},className:`\r
                   flex\r
                   items-center\r
                   gap-2\r
@@ -1090,22 +1090,27 @@ https://sweetalert2.github.io/#ajax-request`),ii(e),typeof e.title==`string`&&(e
                         h-12\r
                         rounded-xl\r
                         border-gray-200\r
-                      `,children:(0,z.jsx)(sw,{placeholder:`Semua Jenis Issue`})}),(0,z.jsxs)(lw,{children:[(0,z.jsx)(uw,{value:`all`,children:`Semua Jenis Issue`}),[...new Set(b?.issues?.map(e=>e.type))].map(e=>(0,z.jsx)(uw,{value:e,children:e},e))]})]})]}),(0,z.jsxs)(`div`,{className:`space-y-2`,children:[(0,z.jsx)(`label`,{className:`text-sm font-medium text-gray-600`,children:`Lokasi`}),(0,z.jsxs)(ow,{value:o,onValueChange:s,children:[(0,z.jsx)(cw,{className:`\r
+                      `,children:(0,z.jsx)(sw,{placeholder:`Semua Jenis Issue`})}),(0,z.jsxs)(lw,{children:[(0,z.jsx)(uw,{value:`all`,children:`Semua Jenis Issue`}),[...new Set(S?.issues?.map(e=>e.type))].map(e=>(0,z.jsx)(uw,{value:e,children:e},e))]})]})]}),(0,z.jsxs)(`div`,{className:`space-y-2`,children:[(0,z.jsx)(`label`,{className:`text-sm font-medium text-gray-600`,children:`Pekerjaan`}),(0,z.jsxs)(ow,{value:m,onValueChange:h,children:[(0,z.jsx)(cw,{className:`\r
+                          w-full\r
+                          h-12\r
+                          rounded-xl\r
+                          border-gray-200\r
+                        `,children:(0,z.jsx)(sw,{placeholder:`Semua Pekerjaan`})}),(0,z.jsxs)(lw,{children:[(0,z.jsx)(uw,{value:`all`,children:`Semua Pekerjaan`}),[...new Set(S?.issues?.map(e=>e.job_name).filter(Boolean))].map(e=>(0,z.jsx)(uw,{value:e,children:e},e))]})]})]}),(0,z.jsxs)(`div`,{className:`space-y-2`,children:[(0,z.jsx)(`label`,{className:`text-sm font-medium text-gray-600`,children:`Lokasi`}),(0,z.jsxs)(ow,{value:o,onValueChange:s,children:[(0,z.jsx)(cw,{className:`\r
                       w-full\r
                       h-12\r
                       rounded-xl\r
                     border-gray-200\r
-                    `,children:(0,z.jsx)(sw,{placeholder:`Semua Lokasi`})}),(0,z.jsxs)(lw,{children:[(0,z.jsx)(uw,{value:`all`,children:`Semua Lokasi`}),[...new Set(b?.issues?.map(e=>e.location))].map(e=>(0,z.jsx)(uw,{value:e,children:e},e))]})]})]}),(0,z.jsxs)(`div`,{className:`space-y-2`,children:[(0,z.jsx)(`label`,{className:`text-sm font-medium text-gray-600`,children:`PIC`}),(0,z.jsxs)(ow,{value:f,onValueChange:p,children:[(0,z.jsx)(cw,{className:`\r
+                    `,children:(0,z.jsx)(sw,{placeholder:`Semua Lokasi`})}),(0,z.jsxs)(lw,{children:[(0,z.jsx)(uw,{value:`all`,children:`Semua Lokasi`}),[...new Set(S?.issues?.map(e=>e.location))].map(e=>(0,z.jsx)(uw,{value:e,children:e},e))]})]})]}),(0,z.jsxs)(`div`,{className:`space-y-2`,children:[(0,z.jsx)(`label`,{className:`text-sm font-medium text-gray-600`,children:`PIC`}),(0,z.jsxs)(ow,{value:f,onValueChange:p,children:[(0,z.jsx)(cw,{className:`\r
                             w-full\r
                             h-12\r
                             rounded-xl\r
                             border-gray-200\r
-                        `,children:(0,z.jsx)(sw,{placeholder:`Semua PIC`})}),(0,z.jsxs)(lw,{children:[(0,z.jsx)(uw,{value:`all`,children:`Semua PIC`}),[...new Set(b?.issues?.map(e=>e.reported_by))].map(e=>(0,z.jsx)(uw,{value:e,children:e},e))]})]})]}),(0,z.jsxs)(`div`,{className:`space-y-2`,children:[(0,z.jsx)(`label`,{className:`text-sm font-medium text-gray-600`,children:`Status`}),(0,z.jsxs)(ow,{value:c,onValueChange:l,children:[(0,z.jsx)(cw,{className:`\r
+                        `,children:(0,z.jsx)(sw,{placeholder:`Semua PIC`})}),(0,z.jsxs)(lw,{children:[(0,z.jsx)(uw,{value:`all`,children:`Semua PIC`}),[...new Set(S?.issues?.map(e=>e.reported_by))].map(e=>(0,z.jsx)(uw,{value:e,children:e},e))]})]})]}),(0,z.jsxs)(`div`,{className:`space-y-2`,children:[(0,z.jsx)(`label`,{className:`text-sm font-medium text-gray-600`,children:`Status`}),(0,z.jsxs)(ow,{value:c,onValueChange:l,children:[(0,z.jsx)(cw,{className:`\r
                             w-full\r
                             h-12\r
                             rounded-xl\r
                             border-gray-200\r
-                        `,children:(0,z.jsx)(sw,{placeholder:`Semua Status`})}),(0,z.jsxs)(lw,{children:[(0,z.jsx)(uw,{value:`all`,children:`Semua Status`}),(0,z.jsx)(uw,{value:`open`,children:`Open`}),(0,z.jsx)(uw,{value:`resolved`,children:`Close`})]})]})]})]}),(0,z.jsxs)(`div`,{className:`flex justify-between mt-8`,children:[(0,z.jsx)(`button`,{onClick:()=>{d(`all`),s(`all`),p(`all`),l(`all`)},className:`\r
+                        `,children:(0,z.jsx)(sw,{placeholder:`Semua Status`})}),(0,z.jsxs)(lw,{children:[(0,z.jsx)(uw,{value:`all`,children:`Semua Status`}),(0,z.jsx)(uw,{value:`open`,children:`Open`}),(0,z.jsx)(uw,{value:`resolved`,children:`Close`})]})]})]})]}),(0,z.jsxs)(`div`,{className:`flex justify-between mt-8`,children:[(0,z.jsx)(`button`,{onClick:()=>{d(`all`),s(`all`),p(`all`),h(`all`),l(`all`)},className:`\r
                     text-red-500\r
                     border\r
                     rounded-xl\r
@@ -1143,7 +1148,7 @@ https://sweetalert2.github.io/#ajax-request`),ii(e),typeof e.title==`string`&&(e
                   h-11\r
                   border\r
                   rounded-lg\r
-                `,children:`Tutup`})})]})}),m&&(0,z.jsx)(`div`,{className:`\r
+                `,children:`Tutup`})})]})}),g&&(0,z.jsx)(`div`,{className:`\r
             fixed\r
             inset-0\r
             z-[99999]\r

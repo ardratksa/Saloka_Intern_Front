@@ -39,6 +39,8 @@ export default function AdminReport() {
 
     const [selectedPic, setSelectedPic] =
     useState('all')
+    const [selectedJob, setSelectedJob] =
+    useState('all')
     const [exportLoading, setExportLoading] =
     useState(false)
 
@@ -149,11 +151,18 @@ export default function AdminReport() {
       selectedPic === 'all' ||
       item.reported_by === selectedPic
 
+    const matchJob =
+      selectedJob === 'all' ||
+      item.job_name === selectedJob
+
     return (
+
       matchLocation &&
       matchStatus &&
       matchType &&
-      matchPic
+      matchPic &&
+      matchJob
+
     )
 
   }) || []
@@ -194,6 +203,11 @@ export default function AdminReport() {
       reported_by:
         selectedPic !== "all"
           ? selectedPic
+          : undefined,
+
+      job:
+        selectedJob !== "all"
+          ? selectedJob
           : undefined,
 
     })
@@ -466,6 +480,57 @@ return (
 
                     </div>
 
+                    <div className="space-y-2">
+
+                    <label className="text-sm font-medium text-gray-600">
+                      Pekerjaan
+                    </label>
+
+                    <Select
+                      value={selectedJob}
+                      onValueChange={setSelectedJob}
+                    >
+
+                      <SelectTrigger
+                        className="
+                          w-full
+                          h-12
+                          rounded-xl
+                          border-gray-200
+                        "
+                      >
+                        <SelectValue placeholder="Semua Pekerjaan" />
+                      </SelectTrigger>
+
+                      <SelectContent>
+
+                        <SelectItem value="all">
+                          Semua Pekerjaan
+                        </SelectItem>
+
+                        {[
+                          ...new Set(
+                            report?.issues
+                              ?.map(x => x.job_name)
+                              .filter(Boolean)
+                          ),
+                        ].map((item:any)=>(
+
+                          <SelectItem
+                            key={item}
+                            value={item}
+                          >
+                            {item}
+                          </SelectItem>
+
+                        ))}
+
+                      </SelectContent>
+
+                    </Select>
+
+                  </div>
+
                  <div className="space-y-2">
 
                     <label className="text-sm font-medium text-gray-600">
@@ -620,6 +685,7 @@ return (
                     setSelectedType('all')
                     setSelectedLocation('all')
                     setSelectedPic('all')
+                    setSelectedJob('all')
                     setSelectedStatus('all')
 
                 }}
